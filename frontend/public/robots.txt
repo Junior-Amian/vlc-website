@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# L'espace client et l'administration (phase 2) ne doivent jamais être indexés.
+Disallow: /espace-client
+Disallow: /admin
+
+Sitemap: https://visilioncorporate.com/sitemap.xml

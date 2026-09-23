@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# Point d'entrée public de l'API.
+# Toutes les requêtes sont réécrites vers index.php (contrôleur frontal).
+# ---------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Laisse passer les fichiers et dossiers qui existent réellement.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # L'en-tête Authorization est retiré par certains CGI/FastCGI :
+    # on le réinjecte pour que l'espace client puisse s'authentifier.
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always unset X-Powered-By
+</IfModule>
+
+# Masque la version de PHP dans les en-têtes de réponse.
+<IfModule mod_php.c>
+    php_flag expose_php off
+</IfModule>
+
+# Empêche le listage du répertoire.
+Options -Indexes

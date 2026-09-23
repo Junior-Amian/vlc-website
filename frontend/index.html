@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover : donne accès aux marges des écrans à encoche (barre d'action mobile). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
+
+    <!-- Blanc, comme l'en-tête : la barre du navigateur mobile se raccorde sans couture. -->
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="author" content="VISILION CORPORATE" />
+
+    <!--
+      Active les apparitions au défilement (.reveal, voir styles/index.css) dès
+      le premier affichage, sans clignotement. Filet de sécurité : si
+      l'application n'a pas démarré au bout de 4 s (script bloqué, erreur), la
+      classe est retirée et tout le contenu redevient visible.
+    -->
+    <script>
+      document.documentElement.classList.add('js');
+      setTimeout(function () {
+        if (!window.__vlcRevealReady) document.documentElement.classList.remove('js');
+      }, 4000);
+    </script>
+
+    <!-- Polices : Poppins pour l'interface, Material Symbols pour les icones. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Seules les graisses utilisées, plus l'italique semi-gras (citation, slogan). -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <!--
+      Icônes réduites aux seules utilisées (icon_names, par ordre alphabétique) et
+      à un seul réglage (taille 24, graisse 400) : 9 Ko au lieu de 4 Mo.
+      TOUTE NOUVELLE ICÔNE doit être ajoutée à cette liste, sinon elle
+      s'affichera comme un mot (ex. « arrow_forward »).
+      display=block : évite ce mot le temps du chargement.
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=arrow_forward,arrow_upward,business_center,call,chat,check,chevron_right,close,error,explore_off,favorite,flight,flight_land,flight_takeoff,forum,gavel,home,home_work,location_on,luggage,mail,menu,notifications_active,payments,photo_camera,progress_activity,schedule,school,send,shield,sports_soccer,verified&display=block"
+      rel="stylesheet"
+    />
+
+    <!--
+      Le titre et la description de chaque page sont fournis par le composant
+      Seo (src/components/ui/Seo.tsx). Ne rien coder en dur ici : la balise
+      apparaitrait en double dans le HTML pre-rendu.
+    -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
