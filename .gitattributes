@@ -1,0 +1,14 @@
+# Normalise les fins de ligne : LF dans le dépôt, convention locale à la
+# copie de travail. Sans cela, un aller-retour Windows / hébergement fait
+# apparaître tous les fichiers comme modifiés.
+* text=auto
+
+# Fichiers binaires : jamais de conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

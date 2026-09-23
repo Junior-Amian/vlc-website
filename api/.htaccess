@@ -1,0 +1,18 @@
+# ---------------------------------------------------------------------------
+# Filet de sécurité.
+#
+# Seul le dossier api/public doit être exposé par le serveur web. Si la
+# configuration de l'hébergeur place malgré tout ce dossier sous la racine
+# web, ce fichier empêche l'accès direct au code, au .env et aux journaux.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+
+Options -Indexes

@@ -1,0 +1,29 @@
+{
+  "name": "visilion-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Site vitrine VISILION CORPORATE - React + Vite, pre-rendu statique",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite-react-ssg build",
+    "build:spa": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^6.30.6",
+    "vite-react-ssg": "^0.9.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0"
+  }
+}

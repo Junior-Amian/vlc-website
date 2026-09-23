@@ -1,0 +1,369 @@
+@import 'tailwindcss';
+
+/*
+  Tailwind 4 se configure en CSS : chaque variable déclarée dans @theme
+  génère les utilitaires correspondants (--color-primary donne bg-primary,
+  text-primary, border-primary...).
+
+  Les valeurs proviennent de docs/DESIGN.md et de la maquette validée
+  (template/code.html).
+*/
+@theme {
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* Bleu marine institutionnel : confiance, autorité consulaire. */
+  --color-primary: #00142f;
+  --color-primary-container: #0f294a;
+  --color-on-primary: #ffffff;
+
+  /* Ocre solaire : conversion, départ, nouveaux commencements. */
+  --color-secondary: #b35b00;
+  --color-secondary-container: #ff9829;
+  --color-secondary-fixed: #ffdfc4;
+  --color-on-secondary-fixed: #2f1500;
+
+  /* Surfaces, du plus clair au plus contrasté. */
+  --color-surface: #f8faff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f4fc;
+  --color-surface-container: #e8eef9;
+  --color-surface-container-high: #dde5f5;
+  --color-on-surface: #111c2d;
+  --color-on-surface-variant: #4d5868;
+
+  /* Vert émeraude : validation, dossier approuvé. */
+  --color-tertiary-container: #033523;
+  --color-tertiary-fixed: #8dfac7;
+  --color-on-tertiary-container: #0d9260;
+
+  /*
+    Les quatre couleurs du logo. Elles repèrent les cinq prestations visa
+    (couleur attribuée dans data/services.ts), reprises dans les témoignages
+    et le pied de page : un repère, jamais un décor. Contrastes sur
+    blanc : bleu 8,86 et vert 5,65 portent du texte ; le rouge (4,36) et le
+    jaune (1,70) non, d'où leurs variantes « -ink » pour le texte. Le jaune
+    donne 10,85 sur le marine.
+  */
+  --color-brand-green: #167730;
+  --color-brand-green-soft: #e6f2e9;
+  --color-brand-blue: #194890;
+  --color-brand-blue-soft: #e8eef8;
+  --color-brand-red: #ef123b;
+  --color-brand-red-ink: #c8102e;
+  --color-brand-red-soft: #fde8ec;
+  --color-brand-yellow: #fabd2e;
+  --color-brand-yellow-ink: #8a5a00;
+  --color-brand-yellow-soft: #fef4dc;
+
+  --radius-card: 1rem;
+  --radius-panel: 1.5rem;
+
+  --shadow-ambient: 0 2px 8px -1px rgb(15 41 74 / 0.05), 0 1px 3px 0 rgb(179 91 0 / 0.03);
+  --shadow-lifted: 0 12px 24px -4px rgb(15 41 74 / 0.08), 0 4px 12px -2px rgb(179 91 0 / 0.04);
+
+  /* Entrée de la bannière (animate-rise), décalée élément par élément via animation-delay. */
+  --animate-rise: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Photo de la bannière : léger zoom arrière au chargement. */
+@keyframes hero-zoom {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes header-elevate {
+  from {
+    box-shadow: 0 1px 2px rgb(0 20 47 / 0.06);
+  }
+  to {
+    box-shadow: 0 10px 30px -12px rgb(0 20 47 / 0.22);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Entrée de la bannière (utilitaire animate-rise, défini dans @theme). */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Compense l'en-tête fixe quand on arrive sur une ancre. */
+    scroll-padding-top: 8rem;
+    /* Mobile : pas de flash gris au toucher (les boutons ont leur propre
+       retour active:scale), et pas d'agrandissement automatique du texte
+       par iOS en mode paysage. */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /*
+    Titres répartis équitablement sur leurs lignes (pas de mot orphelin en
+    fin de titre) ; paragraphes sans dernier mot isolé. Les navigateurs qui
+    ne le gèrent pas gardent le retour à la ligne habituel.
+  */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p,
+  blockquote {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-secondary);
+    color: #ffffff;
+  }
+
+  /* Accessibilité : une cible de focus visible au clavier sur tout le site. */
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    vertical-align: middle;
+  }
+
+  .icon-filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /*
+    En-tête : l'ombre se renforce dès qu'on quitte le haut de page, piloté
+    par la position de défilement (aucun JavaScript). Sans support, l'ombre
+    légère reste fixe.
+  */
+  .header-elevate {
+    box-shadow: 0 1px 2px rgb(0 20 47 / 0.06);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .header-elevate {
+      animation: header-elevate linear both;
+      animation-timeline: scroll();
+      animation-range: 0 120px;
+    }
+  }
+
+  /* Photo de la bannière : léger zoom arrière au chargement. */
+  .hero-zoom {
+    animation: hero-zoom 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /*
+    Tableau des départs : défilement continu (linéaire, comme un écran
+    d'aéroport), fondu sur les bords, pause au survol. Sous réduction des
+    animations, la liste devient statique et se fait défiler à la main.
+  */
+  .marquee {
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  .marquee-track {
+    animation: marquee 45s linear infinite;
+  }
+
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      overflow-x: auto;
+      mask-image: none;
+    }
+
+    .marquee-track {
+      animation: none;
+    }
+  }
+
+  /*
+    Apparition au défilement (.reveal) : l'élément monte et apparaît quand
+    il entre à l'écran ; la classe .is-visible est posée par
+    src/lib/useScrollReveal.ts. Fonctionne dans tous les navigateurs.
+
+    --i décale chaque élément d'une liste pour une cascade dans l'ordre de
+    lecture (style={{ '--i': index }}).
+
+    L'état caché n'existe que sous html.js, classe posée par un script dans
+    index.html : sans JavaScript, et pour les moteurs de recherche, tout le
+    contenu reste visible. Seuls transform et opacity sont animés.
+  */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--i, 0) * 90ms);
+  }
+
+  .js .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /*
+    Galerie des prestations (components/home/Services.tsx).
+
+    La piste démarre à l'aplomb du conteneur de la page (max-w-7xl, soit
+    80rem) plutôt qu'au bord de l'écran : la première carte s'aligne ainsi
+    sur le titre, et la dernière garde la même marge à droite. Le retrait
+    suit les mêmes valeurs que Container (1rem, puis 2rem à partir de sm).
+  */
+  .services-track {
+    padding-inline: max(1rem, calc((100% - 80rem) / 2 + 1rem));
+  }
+
+  /* Galerie non épinglée : l'accrochage s'aligne sur le même retrait. */
+  .services-scroller {
+    scroll-padding-inline: max(1rem, calc((100% - 80rem) / 2 + 1rem));
+  }
+
+  /*
+    Galerie épinglée : gouttières fixes, volontairement plus serrées que le
+    conteneur de la page. La rangée est à fond perdu à droite ; elle se lit
+    comme une bande pleine largeur, pas comme un bloc centré. Un peu plus
+    d'air à gauche, qui porte le titre, qu'à droite, qui n'est qu'une coupe.
+
+    Conséquence assumée : au-delà d'environ 1400 px de large, le titre de
+    cette section ne s'aligne plus sur celui des autres, qui restent dans le
+    conteneur de 80rem.
+  */
+  .services-inset {
+    padding-inline: 2rem 2rem;
+  }
+
+  @media (min-width: 1280px) {
+    .services-inset {
+      padding-inline: 4rem 3rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .services-track {
+      padding-inline: max(2rem, calc((100% - 80rem) / 2 + 2rem));
+    }
+
+    .services-scroller {
+      scroll-padding-inline: max(2rem, calc((100% - 80rem) / 2 + 2rem));
+    }
+  }
+
+  /*
+    Avancement dans la galerie épinglée. --progress est écrit sur la section
+    par lib/useHorizontalPin.ts, hors du cycle de rendu React : la barre
+    suit le défilement sans provoquer de rendu à chaque image.
+  */
+  .services-progress {
+    width: calc(var(--progress, 0) * 100%);
+  }
+
+  /*
+    Fondu du bord droit de la galerie épinglée : il signale qu'il reste des
+    fiches au-delà de la coupe. Sa position dépend du même --progress, si
+    bien qu'il recule au fil de l'avancement et disparaît complètement à
+    l'arrivée — sans quoi la dernière fiche resterait voilée alors qu'il n'y
+    a plus rien après elle.
+  */
+  .services-viewport {
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(86% + var(--progress, 0) * 14%),
+      transparent
+    );
+  }
+
+  /* Boutons fléchés : la flèche avance au survol, pour confirmer l'action. */
+  .arrow-nudge {
+    transition: translate 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  a:hover .arrow-nudge,
+  button:hover .arrow-nudge {
+    translate: 4px 0;
+  }
+
+  /* Confirmation d'envoi du formulaire : la pastille apparaît avec un léger rebond. */
+  .pop-in {
+    animation: pop-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Plan du site déclaré dans robots.txt.
+
+  Le site tient sur une page unique : une seule URL à déclarer. En repassant
+  à des pages distinctes, ajouter ici une entrée par route.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://visilioncorporate.com/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

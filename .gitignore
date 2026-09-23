@@ -1,0 +1,32 @@
+# --- Dépendances et sorties de compilation ---------------------------------
+# dist/ est régénéré par « npm run build » avant chaque mise en ligne :
+# le versionner ferait un conflit à chaque compilation.
+node_modules/
+frontend/dist/
+
+# --- Secrets ---------------------------------------------------------------
+# api/.env contient le mot de passe de la base et la clé JWT.
+# Seul api/.env.example est versionné, comme modèle à recopier.
+.env
+.env.local
+.env.*.local
+api/.env
+
+# --- Exécution de l'API ----------------------------------------------------
+# Journaux, emails écrits en local et compteurs de limitation de débit.
+# Les dossiers sont recréés automatiquement par l'application.
+api/storage/logs/
+api/storage/cache/
+
+# --- Écartés à la demande --------------------------------------------------
+# .claude/ : configuration et skills locaux, propres au poste.
+# template/ : maquette HTML d'origine, conservée hors dépôt.
+.claude/
+template/
+
+# --- Divers ----------------------------------------------------------------
+*.tsbuildinfo
+*.local
+.DS_Store
+Thumbs.db
+desktop.ini
