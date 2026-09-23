@@ -169,8 +169,12 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
   sur fond clair, l'or `#E0A010` ne donne que **2,17** et ne peut pas porter de texte ;
   le rouge `#F70E3B` plafonne à **3,93** et ne convient pas au texte courant non plus.
 
-## Avertissement : aucun filet de sécurité
+## Dépôt
 
-Le dépôt git est initialisé mais **ne contient aucun commit**. Toute modification est
-donc irréversible en dehors de l'historique de l'éditeur. Un premier commit est
-vivement recommandé avant le prochain chantier.
+Le projet est versionné sur `https://github.com/Junior-Amian/vlc-website.git`,
+branche `main`.
+
+Ne sont pas versionnés : `node_modules`, `frontend/dist` (régénéré par
+`npm run build`), `api/.env`, les journaux et le cache de `api/storage/`, ainsi
+que `.claude/` et `template/`. **Après un clone, `api/.env` est à recréer** à
+partir de `api/.env.example` : sans lui, l'API ne démarre pas.
