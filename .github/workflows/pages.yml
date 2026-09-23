@@ -1,0 +1,84 @@
+# Aperçu du site vitrine sur GitHub Pages.
+#
+# ATTENTION — ce n'est qu'un aperçu de la partie statique. GitHub Pages ne
+# sert que des fichiers : l'API PHP de api/ n'y tourne pas, donc le
+# formulaire de contact y répondra « Impossible de joindre nos serveurs ».
+# La mise en ligne réelle reste l'hébergement mutualisé cPanel.
+#
+# Prérequis côté dépôt, à faire une seule fois :
+#   Settings > Pages > Build and deployment > Source = « GitHub Actions ».
+
+name: Aperçu GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Permet de relancer la publication à la main depuis l'onglet Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une seule publication à la fois ; les pushs rapprochés annulent la
+# précédente plutôt que de se marcher dessus.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Compiler
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Installer les dépendances
+        working-directory: frontend
+        run: npm ci
+
+      - name: Compiler le site
+        working-directory: frontend
+        env:
+          # Pages sert le dépôt sous /<nom-du-depot>/, jamais à la racine.
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - name: Préparer la sortie
+        working-directory: frontend/dist
+        run: |
+          # Sans ce fichier, Pages passe la sortie par Jekyll, qui ignore
+          # les fichiers et dossiers commençant par un souligné.
+          touch .nojekyll
+
+          # Un aperçu technique ne doit pas être indexé : il ferait doublon
+          # avec le vrai domaine dans les résultats de recherche.
+          printf 'User-agent: *\nDisallow: /\n' > robots.txt
+          rm -f sitemap.xml
+
+          # Le site est en page unique avec une route « * » pour les URL
+          # inconnues (voir src/routes.tsx). Pages n'a pas de réécriture
+          # d'URL : ce doublon fait office de repli.
+          cp index.html 404.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    name: Publier
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

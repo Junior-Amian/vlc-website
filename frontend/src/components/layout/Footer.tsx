@@ -1,4 +1,5 @@
 import Icon from '../ui/Icon';
+import { asset } from '../../lib/asset';
 import { brand, LOGO_ORDER } from '../ui/brand';
 import { site, whatsappLink } from '../../data/site';
 import { services } from '../../data/services';
@@ -31,7 +32,7 @@ export default function Footer() {
           {/* Marque */}
           <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-4 lg:pr-8">
             <img
-              src="/logo.jpeg"
+              src={asset('/logo.jpeg')}
               alt={site.name}
               width={96}
               height={96}

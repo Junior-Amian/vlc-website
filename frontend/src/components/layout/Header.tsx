@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../ui/Icon';
+import { asset } from '../../lib/asset';
 import { site, whatsappLink } from '../../data/site';
 
 /**
@@ -74,7 +75,7 @@ export default function Header() {
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-4 sm:h-20 sm:px-8">
         <a href="#" className="group flex shrink-0 items-center" onClick={closeMenu}>
           <img
-            src="/logo.jpeg"
+            src={asset('/logo.jpeg')}
             alt={`${site.name}, retour en haut de page`}
             width={120}
             height={56}

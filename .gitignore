@@ -21,8 +21,13 @@ api/storage/cache/
 # --- Écartés à la demande --------------------------------------------------
 # .claude/ : configuration et skills locaux, propres au poste.
 # template/ : maquette HTML d'origine, conservée hors dépôt.
+# docs/ : cahiers des charges du client et logo. Retirés du dépôt le
+#   23/09/2026, celui-ci étant devenu public : ils contiennent les
+#   coordonnées du client et le texte personnel des fondateurs. Ils restent
+#   sur le poste et le tableau de référence de CLAUDE.md y renvoie toujours.
 .claude/
 template/
+docs/
 
 # --- Divers ----------------------------------------------------------------
 *.tsbuildinfo
