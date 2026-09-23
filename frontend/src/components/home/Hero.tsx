@@ -1,4 +1,5 @@
 import Icon from '../ui/Icon';
+import { asset } from '../../lib/asset';
 import { site } from '../../data/site';
 
 /*
@@ -22,8 +23,8 @@ export default function Hero() {
     <section id="accueil" className="relative isolate overflow-hidden bg-primary lg:flex lg:min-h-[min(100dvh,820px)] lg:items-center">
       <div className="relative h-[42vh] min-h-[260px] max-h-[440px] overflow-hidden sm:h-[50vh] sm:max-h-[520px] lg:absolute lg:inset-0 lg:-z-10 lg:h-auto lg:max-h-none">
         <img
-          src="/images/hero-paris-1920.webp"
-          srcSet="/images/hero-paris-960.webp 960w, /images/hero-paris-1920.webp 1920w, /images/hero-paris-2400.webp 2400w"
+          src={asset('/images/hero-paris-1920.webp')}
+          srcSet={`${asset('/images/hero-paris-960.webp')} 960w, ${asset('/images/hero-paris-1920.webp')} 1920w, ${asset('/images/hero-paris-2400.webp')} 2400w`}
           sizes="100vw"
           width={1920}
           height={1280}

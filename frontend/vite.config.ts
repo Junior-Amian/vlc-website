@@ -3,6 +3,15 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  /*
+    Racine du site. Le domaine final et l'hébergement cPanel servent le site
+    à la racine, d'où « / » par défaut. GitHub Pages le publie dans un
+    sous-dossier (/vlc-website/) : le workflow .github/workflows/pages.yml
+    renseigne alors VITE_BASE. Sans cela, toutes les URL d'actifs et le
+    basename du routeur (voir src/main.tsx) pointeraient à côté.
+  */
+  base: process.env.VITE_BASE || '/',
+
   plugins: [react(), tailwindcss()],
 
   server: {
