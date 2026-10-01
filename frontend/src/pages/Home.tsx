@@ -4,6 +4,7 @@ import Hero from '../components/home/Hero';
 import DeparturesBoard from '../components/home/DeparturesBoard';
 import Founders from '../components/home/Founders';
 import Services from '../components/home/Services';
+import CollegePartner from '../components/home/CollegePartner';
 import Testimonials from '../components/home/Testimonials';
 import ClientPortalCta from '../components/home/ClientPortalCta';
 import ContactForm from '../components/home/ContactForm';
@@ -16,8 +17,9 @@ import { site } from '../data/site';
  *
  * Toutes les rubriques sont empilées ici et la navigation se fait par ancres.
  * Chaque section porte l'identifiant utilisé par le menu (#fondateurs,
- * #services, #temoignages, #contact) ; le décalage sous l'en-tête fixe est
- * géré par `scroll-padding-top` dans styles/index.css.
+ * #services, #temoignages, #contact ; #college-universel n'est pas au
+ * menu) ; le décalage sous l'en-tête fixe est géré par `scroll-padding-top`
+ * dans styles/index.css.
  */
 export default function Home() {
   return (
@@ -48,6 +50,7 @@ export default function Home() {
       <Founders />
 
       <Services />
+      <CollegePartner />
       <Testimonials />
       <ClientPortalCta />
 

@@ -11,7 +11,7 @@ export const site = {
   baseUrl: 'https://visilioncorporate.com',
 
   description:
-    "Cabinet d'assistanat visa à Abidjan : visa étudiant, résidence permanente, visa visiteur, visa d'affaires et visa sport. Votre dossier préparé de A à Z, entretien compris.",
+    "Cabinet d'assistanat visa à Abidjan. Études, tourisme, affaires, sport, travail ou résidence permanente : nous préparons votre dossier de A à Z, quelle que soit votre destination.",
 
   contact: {
     phoneDisplay: '01 51 46 30 51',

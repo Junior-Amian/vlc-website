@@ -17,7 +17,7 @@ const FEATURES = [
 */
 export default function ClientPortalCta() {
   return (
-    <Section className="bg-white pt-0! sm:pt-0! lg:pt-0!">
+    <Section id="espace-client" className="bg-white pt-0! sm:pt-0! lg:pt-0!">
       <div className="reveal relative overflow-hidden rounded-3xl bg-primary p-8 text-white shadow-2xl shadow-primary/25 sm:p-12 lg:p-16">
         <div
           aria-hidden="true"
@@ -29,7 +29,8 @@ export default function ClientPortalCta() {
         />
 
         <div className="relative z-10 grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
-          <div className="flex flex-col gap-5 lg:col-span-8">
+          {/* Centré sur une colonne ; la liste garde ses lignes alignées à gauche. */}
+          <div className="flex flex-col items-center gap-5 text-center lg:col-span-8 lg:items-start lg:text-left">
             <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-brand-yellow">
               <Icon name="schedule" size={16} />
               Bientôt disponible
@@ -45,7 +46,7 @@ export default function ClientPortalCta() {
               directement avec votre conseiller dédié.
             </p>
 
-            <ul className="grid grid-cols-1 gap-3.5 pt-2 sm:grid-cols-2">
+            <ul className="grid max-w-full grid-cols-1 gap-3.5 pt-2 text-left sm:grid-cols-2">
               {FEATURES.map((feature) => (
                 <li key={feature.text} className="flex items-center gap-2.5 text-sm text-slate-200">
                   <Icon name={feature.icon} size={18} className="shrink-0 text-brand-yellow" />
@@ -57,7 +58,7 @@ export default function ClientPortalCta() {
 
           <div className="flex flex-col gap-3 lg:col-span-4">
             <div className="rounded-2xl border border-white/20 bg-white/10 p-6">
-              <p className="text-sm leading-relaxed text-slate-200">
+              <p className="text-center text-sm leading-relaxed text-slate-200 lg:text-left">
                 En attendant, votre conseiller assure le suivi complet de votre dossier par
                 téléphone et WhatsApp, comme aujourd'hui.
               </p>

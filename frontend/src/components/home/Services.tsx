@@ -9,7 +9,7 @@ import { services, type Service } from '../../data/services';
  * Une prestation, sous forme de fiche.
  *
  * Parti pris : pas de bandeau ni de pastilles colorées, qui alourdissaient
- * la série de cinq. La couleur du logo n'apparaît qu'à trois endroits, du
+ * la série de six. La couleur du logo n'apparaît qu'à trois endroits, du
  * plus petit au plus lisible — l'icône, un filet sous le titre, la ligne des
  * destinations — et c'est le seul repère de couleur. Tout le reste tient sur
  * la hiérarchie typographique et une ombre discrète.
@@ -26,13 +26,48 @@ import { services, type Service } from '../../data/services';
  * `transition-property: transform` ne couvre pas. Y nommer `transform` fait
  * sauter la carte au lieu de la faire monter.
  */
-function ServiceCard({ service, index }: { service: Service; index: number }) {
+/*
+  Deux formats de fiche.
+
+  - `gallery` : galerie au doigt et grand écran épinglé.
+  - `full` (mobile épinglé) : la fiche occupe toute la largeur, à sa hauteur
+    naturelle (étirée sur tout l'écran, elle se remplissait de blanc). Marges
+    intérieures plus larges que dans la galerie, et textes qui suivent un peu
+    la hauteur d'écran (svh), bornés : jamais sous 16 px, et plafonnés pour
+    que titre, compteur et fiche tiennent ensemble à l'écran. Largeur : mêmes
+    valeurs que .services-track-narrow dans index.css (30rem, 1rem).
+*/
+const CARD_STYLE = {
+  gallery: {
+    card: 'w-[17.5rem] gap-4 p-6 sm:w-[19.5rem] lg:w-[22rem] lg:p-7',
+    title: 'text-xl',
+    tagline: 'text-base lg:text-[0.9375rem]',
+    text: 'text-base leading-relaxed lg:text-[0.9375rem] lg:leading-[1.7]',
+  },
+  full: {
+    card: 'w-[min(calc(100vw-2rem),30rem)] gap-4 px-6 py-7 sm:gap-5 sm:p-10',
+    title: 'text-[clamp(1.25rem,2.8svh,1.5rem)] sm:text-[1.75rem]',
+    tagline: 'text-[clamp(1rem,1.9svh,1.0625rem)] sm:text-lg',
+    text: 'text-[clamp(1rem,1.9svh,1.0625rem)] leading-relaxed sm:text-lg',
+  },
+};
+
+function ServiceCard({
+  service,
+  index,
+  format,
+}: {
+  service: Service;
+  index: number;
+  format: keyof typeof CARD_STYLE;
+}) {
   const colors = brand[service.color];
+  const style = CARD_STYLE[format];
 
   return (
     <article
       id={service.slug}
-      className="group flex h-full w-[17.5rem] shrink-0 snap-start scroll-mt-28 flex-col gap-4 rounded-panel border border-surface-container bg-white p-6 shadow-ambient transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:border-surface-container-high hover:shadow-lifted sm:w-[19.5rem] lg:w-[22rem] lg:p-7"
+      className={`group flex h-full shrink-0 snap-start scroll-mt-28 flex-col rounded-panel border border-surface-container bg-white shadow-ambient transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:border-surface-container-high hover:shadow-lifted ${style.card}`}
     >
       <div className="flex items-center justify-between">
         <span
@@ -48,7 +83,7 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="text-xl font-extrabold leading-tight tracking-tight text-primary">
+        <h3 className={`font-extrabold leading-tight tracking-tight text-primary ${style.title}`}>
           {service.title}
         </h3>
 
@@ -62,7 +97,7 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
           className={`h-0.5 w-16 origin-left scale-x-[0.5625] rounded-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-x-100 ${colors.solid}`}
         />
 
-        <p className="text-base font-semibold leading-snug text-on-surface lg:text-[0.9375rem]">
+        <p className={`font-semibold leading-snug text-on-surface ${style.tagline}`}>
           {service.tagline}
         </p>
       </div>
@@ -72,7 +107,7 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
         appui. 15 px à partir de lg, avec un interlignage plus généreux :
         la fiche doit tenir dans un écran épinglé peu haut.
       */}
-      <p className="text-base leading-relaxed text-on-surface-variant lg:text-[0.9375rem] lg:leading-[1.7]">
+      <p className={`text-on-surface-variant ${style.text}`}>
         {service.description}
       </p>
 
@@ -101,24 +136,29 @@ function ServiceCard({ service, index }: { service: Service; index: number }) {
 }
 
 /**
- * Les cinq prestations de docs/Services_Assistanat_Visa.pdf, seuls services
- * présentés sur le site. Chacune porte une couleur du logo, reprise dans les
- * témoignages et le pied de page.
+ * Les six prestations de data/services.ts (les cinq de
+ * docs/Services_Assistanat_Visa.pdf et le contrat de travail au Canada),
+ * seuls services présentés sur le site. Chacune porte une couleur du logo,
+ * reprise dans les témoignages et le pied de page.
  *
- * Deux présentations pour une seule liste de fiches :
+ * Trois présentations pour une seule liste de fiches (voir
+ * lib/useHorizontalPin.ts) :
  *
- * - par défaut (mobile, sans JavaScript, animations réduites) : le titre au-
- *   dessus, puis une galerie qui se fait défiler au doigt, carte par carte ;
- * - sur grand écran : la section s'épingle, le titre tient la colonne de
- *   gauche et les fiches défilent en face de lui, poussées par le défilement
- *   vertical (voir lib/useHorizontalPin.ts).
+ * - `off` (sans JavaScript, animations réduites, écran trop bas) : le titre
+ *   au-dessus, puis une galerie qui se fait défiler au doigt ;
+ * - `wide` (grand écran) : la section s'épingle, le titre tient la colonne
+ *   de gauche et les fiches défilent en face de lui, poussées par le
+ *   défilement vertical ;
+ * - `narrow` (mobile et tablette) : même mécanique, mais le titre reste
+ *   au-dessus, hors de la partie épinglée, et chaque fiche occupe toute la
+ *   largeur. Des repères invisibles aimantent le défilement sur chaque fiche.
  *
  * C'est la première qui est pré-rendue : le contenu est lisible et navigable
  * même si le script ne s'exécute jamais.
  *
- * Pas d'apparition `reveal` sur la version épinglée : elle n'existe pas
- * encore quand useScrollReveal recense les éléments à observer, et resterait
- * donc invisible.
+ * Pas d'apparition `reveal` dans les versions épinglées : elles n'existent
+ * pas encore quand useScrollReveal recense les éléments à observer, et
+ * resteraient donc invisibles.
  */
 export default function Services() {
   const {
@@ -126,8 +166,11 @@ export default function Services() {
     pinRef,
     viewportRef,
     trackRef,
+    mode,
     pinned,
     height,
+    step,
+    stickyTop,
     activeIndex,
     entered,
     scrollToCard,
@@ -149,23 +192,53 @@ export default function Services() {
     return () => window.removeEventListener('hashchange', follow);
   }, [pinned, scrollToCard]);
 
+  const title = 'Six procédures, un même accompagnement.';
+
+  const intro = (
+    <p className="text-base leading-relaxed text-on-surface-variant">
+      Quel que soit votre projet, nous montons votre dossier avec rigueur et vous préparons à
+      chaque étape, jusqu'à la réponse du consulat.
+    </p>
+  );
+
+  const cta = (
+    <a
+      href="#contact"
+      className="mt-1 inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-on-secondary-fixed active:scale-[0.98]"
+    >
+      <span>Démarrer ma procédure</span>
+      <Icon name="arrow_forward" size={18} className="arrow-nudge" />
+    </a>
+  );
+
   const heading = (
     <>
       <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl">
-        Cinq visas, un même accompagnement.
+        {title}
       </h2>
-      <p className="text-base leading-relaxed text-on-surface-variant">
-        Quel que soit votre projet, nous montons votre dossier avec rigueur et vous préparons à
-        chaque étape, jusqu'à la réponse du consulat.
-      </p>
-      <a
-        href="#contact"
-        className="mt-1 inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-on-secondary-fixed active:scale-[0.98]"
-      >
-        <span>Démarrer ma procédure</span>
-        <Icon name="arrow_forward" size={18} className="arrow-nudge" />
-      </a>
+      {intro}
+      {cta}
     </>
+  );
+
+  /*
+    Avancement dans la série. La largeur de la barre est pilotée par la
+    variable CSS --progress, écrite hors de React pour ne pas provoquer un
+    rendu à chaque image.
+  */
+  const progress = (
+    <div aria-hidden="true" className="flex w-full items-center gap-4">
+      <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-on-surface-variant">
+        {String(activeIndex + 1).padStart(2, '0')}
+        <span className="text-on-surface-variant/40">
+          {' / '}
+          {String(services.length).padStart(2, '0')}
+        </span>
+      </span>
+      <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high">
+        <span className="services-progress block h-full rounded-full bg-secondary" />
+      </span>
+    </div>
   );
 
   /*
@@ -185,28 +258,48 @@ export default function Services() {
       className={entered ? 'flex animate-rise' : 'flex'}
       style={entered ? { animationDelay: `${index * 50}ms` } : undefined}
     >
-      <ServiceCard service={service} index={index} />
+      <ServiceCard
+        service={service}
+        index={index}
+        format={mode === 'narrow' ? 'full' : 'gallery'}
+      />
     </li>
   ));
 
   return (
     <section ref={rootRef} id="services" className="bg-surface-container-low">
-      {/* Titre au-dessus : uniquement quand la galerie n'est pas épinglée. */}
-      {!pinned && (
+      {/*
+        Galerie au doigt : titre au-dessus, centré tant qu'il est seul sur sa
+        ligne. Épinglée, le titre vit dans l'écran épinglé (colonne de gauche
+        sur grand écran, au-dessus de la fiche sur mobile).
+      */}
+      {mode === 'off' && (
         <Container className="pt-20 sm:pt-24">
-          <div className="reveal flex max-w-2xl flex-col items-start gap-5">
+          <div className="reveal mx-auto flex max-w-2xl flex-col items-center gap-5 text-center lg:mx-0 lg:items-start lg:text-left">
             {heading}
 
             {/*
               Une galerie qui se fait glisser doit le dire : le débord de la
-              fiche suivante ne suffit pas comme indice. Masquée sur grand
-              écran, où la barre d'avancement joue ce rôle.
+              fiche suivante ne suffit pas comme indice.
             */}
             <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-on-surface-variant">
               <Icon name="chevron_right" size={18} className="text-secondary" />
-              Glissez pour parcourir les cinq prestations
+              Glissez pour parcourir les six prestations
             </p>
           </div>
+        </Container>
+      )}
+
+      {/*
+        Mobile épinglé sur un écran de moins de 800 px de haut : le titre ne
+        tient pas avec la fiche dans l'écran épinglé, il passe donc juste
+        avant. Un seul des deux titres est affiché à la fois (`tall:`).
+      */}
+      {mode === 'narrow' && (
+        <Container className="pt-16 tall:hidden">
+          <h2 className="mx-auto max-w-md text-center text-2xl font-extrabold leading-tight tracking-tight text-primary">
+            {title}
+          </h2>
         </Container>
       )}
 
@@ -216,7 +309,25 @@ export default function Services() {
         s'aplatir.
       */}
       <div ref={pinRef} className="relative" style={pinned && height > 0 ? { height } : undefined}>
-        {pinned ? (
+        {/*
+          Repères d'aimantage (mobile épinglé) : un par fiche, espacés du
+          défilement qui fait passer à la suivante. Décalés de 8rem, soit le
+          scroll-padding-top de la page (index.css), sans quoi l'aimantage
+          s'arrêterait 8rem trop tôt, et remontés de `stickyTop` : l'épinglage
+          commence quand le bloc arrive sous l'en-tête, pas en haut de l'écran.
+        */}
+        {mode === 'narrow' &&
+          step > 0 &&
+          services.map((service, index) => (
+            <span
+              key={service.slug}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 h-px w-px snap-start"
+              style={{ top: `calc(${index * step - stickyTop}px + 8rem)` }}
+            />
+          ))}
+
+        {mode === 'wide' && (
           <div className="sticky top-0 h-dvh overflow-hidden pt-20">
             {/*
               Le retrait à gauche aligne le titre sur le reste de la page ;
@@ -226,24 +337,7 @@ export default function Services() {
             <div className="services-inset flex h-full w-full items-center gap-10 xl:gap-14">
               <div className="flex w-[21rem] shrink-0 flex-col items-start gap-5 xl:w-[24rem]">
                 {heading}
-
-                {/*
-                  Avancement dans la série. La largeur de la barre est
-                  pilotée par la variable CSS --progress, écrite hors de
-                  React pour ne pas provoquer un rendu à chaque image.
-                */}
-                <div aria-hidden="true" className="mt-4 flex w-full items-center gap-4">
-                  <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-on-surface-variant">
-                    {String(activeIndex + 1).padStart(2, '0')}
-                    <span className="text-on-surface-variant/40">
-                      {' / '}
-                      {String(services.length).padStart(2, '0')}
-                    </span>
-                  </span>
-                  <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-container-high">
-                    <span className="services-progress block h-full rounded-full bg-secondary" />
-                  </span>
-                </div>
+                <div className="mt-4 w-full">{progress}</div>
               </div>
 
               {/*
@@ -266,7 +360,47 @@ export default function Services() {
               </div>
             </div>
           </div>
-        ) : (
+        )}
+
+        {mode === 'narrow' && (
+          /*
+            Collé juste sous l'en-tête (72 px, 80 à partir de sm), haut de
+            tout le reste de l'écran (svh : stable quand la barre d'adresse du
+            mobile se replie). Le hook lit ce `top` pour caler l'épinglage.
+
+            Comme sur grand écran, l'écran épinglé porte le titre de la
+            section avec la fiche : c'est lui qui occupe la hauteur, plutôt
+            qu'une fiche étirée et à moitié vide. Titre, compteur et fiche
+            forment un bloc centré ; shrink-0 pour qu'aucun ne se tasse, et
+            que le hook voie un débordement s'il y en a un.
+          */
+          <div className="sticky top-[72px] flex h-[calc(100svh-72px)] flex-col justify-center gap-4 sm:top-20 sm:h-[calc(100svh-5rem)] sm:gap-6">
+            <div className="mx-auto flex w-full max-w-[30rem] shrink-0 flex-col gap-3 px-4 text-center">
+              <h2 className="hidden text-[clamp(1.375rem,3svh,1.75rem)] font-extrabold leading-tight tracking-tight text-primary sm:text-4xl tall:block">
+                {title}
+              </h2>
+              {progress}
+            </div>
+
+            <div
+              ref={viewportRef}
+              role="region"
+              aria-label="Nos prestations visa"
+              className="shrink-0 overflow-hidden"
+            >
+              <ul
+                ref={trackRef}
+                // items-center et non items-stretch : chaque fiche garde sa
+                // hauteur, sans blanc ajouté pour s'aligner sur la plus haute.
+                className="services-track-narrow relative flex w-max items-center gap-4 py-2 will-change-transform"
+              >
+                {cards}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {mode === 'off' && (
           <div
             className="services-scroller overflow-x-auto overscroll-x-contain"
             // Sans élément focalisable à l'intérieur, une zone défilante doit
@@ -282,8 +416,22 @@ export default function Services() {
         )}
       </div>
 
+      {/*
+        Mobile épinglé : l'accroche et le bouton, qui n'ont pas leur place
+        dans l'écran épinglé, concluent la section une fois la dernière
+        fiche passée.
+      */}
+      {mode === 'narrow' && (
+        <Container className="pb-20 pt-6 sm:pb-24">
+          <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
+            {intro}
+            {cta}
+          </div>
+        </Container>
+      )}
+
       {/* Bas de section : en mode épinglé, l'écran entier fait déjà la marge. */}
-      {!pinned && <div className="h-16 sm:h-20" />}
+      {mode === 'off' && <div className="h-16 sm:h-20" />}
     </section>
   );
 }

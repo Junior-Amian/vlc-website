@@ -54,8 +54,13 @@ function readPayload(form: HTMLFormElement): ContactPayload {
   };
 }
 
+/*
+  16 px sur écran tactile, quelle que soit la largeur : en deçà, iOS agrandit
+  la page au premier appui dans un champ (iPad et téléphone à l'horizontale
+  compris). 14 px seulement avec une souris ou un pavé tactile.
+*/
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-xl border bg-surface px-4 text-base text-on-surface placeholder:text-on-surface-variant/70 transition-colors focus:bg-white focus:outline-none focus:ring-2 sm:text-sm ${
+  return `w-full rounded-xl border bg-surface px-4 text-base text-on-surface placeholder:text-on-surface-variant/70 transition-colors focus:bg-white focus:outline-none focus:ring-2 pointer-fine:text-sm ${
     hasError
       ? 'border-red-600 focus:ring-red-600/30'
       : 'border-surface-container-high hover:border-on-surface-variant/40 focus:border-secondary focus:ring-secondary/25'

@@ -37,7 +37,7 @@
   --color-on-tertiary-container: #0d9260;
 
   /*
-    Les quatre couleurs du logo. Elles repèrent les cinq prestations visa
+    Les quatre couleurs du logo. Elles repèrent les six prestations
     (couleur attribuée dans data/services.ts), reprises dans les témoignages
     et le pied de page : un repère, jamais un décor. Contrastes sur
     blanc : bleu 8,86 et vert 5,65 portent du texte ; le rouge (4,36) et le
@@ -63,7 +63,35 @@
 
   /* Entrée de la bannière (animate-rise), décalée élément par élément via animation-delay. */
   --animate-rise: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  /* Ouverture du menu mobile : courte, un menu doit répondre tout de suite. */
+  --animate-sheet-in: sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  Écran peu haut : téléphone tenu à l'horizontale (moins de 500 px de haut).
+  L'en-tête s'y resserre et la barre d'action du bas y cède la place au
+  bouton de l'en-tête : à eux deux, ils mangeaient 40 % de la hauteur.
+*/
+@custom-variant short (@media (max-height: 500px));
+
+/*
+  Écran assez haut (800 px et plus) pour que la galerie des prestations
+  épinglée sur mobile loge son titre au-dessus de la fiche. En deçà, le titre
+  passe avant la partie épinglée (voir Services.tsx).
+*/
+@custom-variant tall (@media (min-height: 800px));
 
 /* Photo de la bannière : léger zoom arrière au chargement. */
 @keyframes hero-zoom {
@@ -285,6 +313,17 @@
     padding-inline: max(1rem, calc((100% - 80rem) / 2 + 1rem));
   }
 
+  /*
+    Galerie épinglée sur mobile : une fiche pleine largeur, centrée, plafonnée
+    à 30rem sur tablette. Retrait = (largeur − fiche) / 2, pour que chaque
+    fiche arrive exactement au centre et que la distance entre deux fiches
+    soit une largeur de fiche plus l'écart. Mêmes valeurs que CARD_WIDTH.full
+    dans Services.tsx.
+  */
+  .services-track-narrow {
+    padding-inline: max(1rem, calc((100% - 30rem) / 2));
+  }
+
   /* Galerie non épinglée : l'accrochage s'aligne sur le même retrait. */
   .services-scroller {
     scroll-padding-inline: max(1rem, calc((100% - 80rem) / 2 + 1rem));
@@ -344,6 +383,30 @@
     );
   }
 
+  /*
+    Tampon « 3 jours ouvrables » (components/home/CollegePartner.tsx),
+    posé de biais. À l'arrivée de la section, il frappe au lieu de monter
+    comme les autres .reveal : il part plus grand et s'écrase en place.
+    L'inclinaison passe par `rotate`, propriété indépendante de `transform`
+    que l'apparition anime. Ne pas écrire `transform: none` et `scale` dans
+    une même règle : le minifieur les fusionne en `transform: scale()`.
+    Sans JavaScript, il est posé d'emblée.
+  */
+  .stamp {
+    rotate: -8deg;
+  }
+
+  .js .reveal.stamp {
+    transform: scale(1.35);
+    transition:
+      opacity 0.25s ease-out 0.25s,
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s;
+  }
+
+  .js .reveal.stamp.is-visible {
+    transform: none;
+  }
+
   /* Boutons fléchés : la flèche avance au survol, pour confirmer l'action. */
   .arrow-nudge {
     transition: translate 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -360,7 +423,8 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .js .reveal {
+    .js .reveal,
+    .js .reveal.stamp {
       opacity: 1;
       transform: none;
       transition: none;

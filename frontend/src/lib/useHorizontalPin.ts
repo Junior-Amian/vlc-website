@@ -13,11 +13,21 @@ const useMeasureEffect = typeof window === 'undefined' ? useEffect : useLayoutEf
  * reste collée à l'écran et le défilement vertical fait avancer la piste de
  * cartes vers la gauche, au pixel près (1 px de molette = 1 px de piste).
  *
- * Progressif par construction. `pinned` vaut `false` au rendu serveur et au
+ * Progressif par construction. `mode` vaut `'off'` au rendu serveur et au
  * premier rendu client : le HTML pré-rendu est donc la version simple, une
  * liste qui se fait défiler au doigt. L'épinglage ne s'active qu'après
- * montage, et seulement si l'écran est large et que le visiteur n'a pas
- * demandé de réduire les animations. Aucune hydratation ne diverge.
+ * montage, et jamais si le visiteur a demandé de réduire les animations.
+ * Aucune hydratation ne diverge. Deux présentations épinglées :
+ *
+ * - `wide` (grand écran) : titre à gauche, fiches qui défilent en face ;
+ * - `narrow` (mobile et tablette, à condition que l'écran fasse au moins
+ *   640 px de haut pour loger une fiche entière) : une fiche occupe la
+ *   largeur, et chaque cran de défilement amène la suivante. Un aimantage
+ *   léger (scroll-snap « proximity ») pose le défilement sur une fiche
+ *   entière quand on s'arrête près d'elle, voir `step`.
+ *
+ * Écran trop bas (téléphone à l'horizontale) : pas d'épinglage, la liste
+ * simple reste en place.
  *
  * La position est lissée (interpolation à 14 % par image) : la piste rattrape
  * la molette en ~150 ms au lieu de la suivre sèchement. C'est ce décalage
@@ -26,7 +36,7 @@ const useMeasureEffect = typeof window === 'undefined' ? useEffect : useLayoutEf
  * Écritures hors du cycle React : la transformation est posée directement sur
  * le nœud dans la boucle d'animation, et l'avancement est publié en variable
  * CSS `--progress` sur la section. Seul `activeIndex` passe par un état, et
- * il ne change que cinq fois sur toute la traversée.
+ * il ne change qu'une fois par fiche sur toute la traversée.
  */
 
 /** Part du retard rattrapée à chaque image ; plus bas = plus glissant. */
@@ -34,6 +44,16 @@ const EASING = 0.14;
 
 /** En deçà, on considère la piste arrivée et on arrête la boucle. */
 const SETTLED_PX = 0.1;
+
+/**
+ * Sur mobile, la barre d'adresse qui se replie au défilement change la
+ * hauteur de la fenêtre et déclenche `resize`. Tant que la largeur ne bouge
+ * pas et que l'écart reste de cet ordre, on ne remesure pas : la section
+ * changerait de hauteur sous le doigt et ferait sauter la page.
+ */
+const URL_BAR_PX = 160;
+
+export type PinMode = 'off' | 'wide' | 'narrow';
 
 export function useHorizontalPin(count: number) {
   /** La section entière, porteuse de la variable CSS --progress. */
@@ -49,8 +69,11 @@ export function useHorizontalPin(count: number) {
   /** La piste déplacée horizontalement. */
   const trackRef = useRef<HTMLUListElement>(null);
 
-  const [pinned, setPinned] = useState(false);
+  const [mode, setMode] = useState<PinMode>('off');
+  const pinned = mode !== 'off';
   const [height, setHeight] = useState(0);
+  /** Défilement vertical qui fait passer d'une fiche à la suivante. */
+  const [step, setStep] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
   const [entered, setEntered] = useState(false);
 
@@ -61,25 +84,64 @@ export function useHorizontalPin(count: number) {
   const target = useRef(0);
   const current = useRef(0);
   const frame = useRef(0);
+  /**
+   * La fiche tient-elle en hauteur en mode `narrow` ? La hauteur d'écran ne
+   * suffit pas à le prédire : plus l'écran est étroit, plus la fiche est
+   * haute. On essaie, on mesure (voir `measure`), et on renonce si elle
+   * déborde. Remis à `true` à chaque changement de format d'écran.
+   */
+  const narrowFits = useRef(true);
+  /** `top` du bloc collant, lu dans la page : 0 sur grand écran, l'en-tête sur mobile. */
+  const stickyTopRef = useRef(0);
+  const [stickyTop, setStickyTop] = useState(0);
 
-  // Épinglage réservé au grand écran, et jamais sous réduction des animations :
-  // détourner le défilement de quelqu'un qui demande moins de mouvement serait
-  // exactement le contraire de ce qu'il demande.
+  // Jamais d'épinglage sous réduction des animations : détourner le
+  // défilement de quelqu'un qui demande moins de mouvement serait exactement
+  // le contraire de ce qu'il demande.
   useEffect(() => {
     const wide = window.matchMedia('(min-width: 1024px)');
+    const tall = window.matchMedia('(min-height: 640px)');
     const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const queries = [wide, tall, still];
 
-    const decide = () => setPinned(wide.matches && !still.matches);
+    const decide = () =>
+      setMode(
+        still.matches
+          ? 'off'
+          : wide.matches
+            ? 'wide'
+            : tall.matches && narrowFits.current
+              ? 'narrow'
+              : 'off',
+      );
+
+    const onChange = () => {
+      narrowFits.current = true;
+      decide();
+    };
 
     decide();
-    wide.addEventListener('change', decide);
-    still.addEventListener('change', decide);
+    queries.forEach((query) => query.addEventListener('change', onChange));
+
+    return () => queries.forEach((query) => query.removeEventListener('change', onChange));
+  }, []);
+
+  /*
+    Aimantage des fiches sur mobile : les repères (voir Services.tsx) portent
+    `scroll-snap-align`, mais l'aimantage ne vaut que si la page le déclare.
+    « proximity » et non « mandatory » : on n'est attiré que si l'on s'arrête
+    près d'une fiche, le reste de la page défile librement.
+  */
+  useEffect(() => {
+    if (mode !== 'narrow') return;
+
+    const html = document.documentElement;
+    html.style.scrollSnapType = 'y proximity';
 
     return () => {
-      wide.removeEventListener('change', decide);
-      still.removeEventListener('change', decide);
+      html.style.scrollSnapType = '';
     };
-  }, []);
+  }, [mode]);
 
   /*
     Arrivée de la section à l'écran, pour déclencher l'entrée en cascade des
@@ -122,9 +184,13 @@ export function useHorizontalPin(count: number) {
       if (track) track.style.transform = '';
       if (root) root.style.removeProperty('--progress');
       setHeight(0);
+      setStep(0);
       setActiveIndex(0);
       return;
     }
+
+    let lastWidth = window.innerWidth;
+    let lastHeight = window.innerHeight;
 
     const render = () => {
       track.style.transform = `translate3d(${-current.current}px, 0, 0)`;
@@ -156,7 +222,9 @@ export function useHorizontalPin(count: number) {
       // le point de départ, et l'épinglage commencerait au mauvais endroit.
       // Une lecture de rectangle par événement de défilement ne coûte rien,
       // la transformation étant écrite plus tard, dans la boucle d'animation.
-      offsetTop.current = pin.getBoundingClientRect().top + window.scrollY;
+      // L'épinglage commence quand le bloc atteint le `top` du sticky (0 sur
+      // grand écran, sous l'en-tête sur mobile), pas le haut de l'écran.
+      offsetTop.current = pin.getBoundingClientRect().top + window.scrollY - stickyTopRef.current;
 
       const progress =
         distance.current === 0
@@ -170,11 +238,49 @@ export function useHorizontalPin(count: number) {
     };
 
     const measure = () => {
+      // Le bloc collant : sa position (`top`) et sa hauteur réelles, plutôt
+      // que « tout l'écran » — sur mobile, il se colle sous l'en-tête.
+      const stage = pin.querySelector<HTMLElement>(':scope > .sticky');
+
+      // Mobile : si titre, compteur et fiche ne tiennent pas ensemble dans
+      // l'écran épinglé, on revient à la galerie au doigt plutôt que de
+      // couper la fiche. Trois signes de débordement : l'écran épinglé plus
+      // haut que lui-même, la piste plus haute que sa fenêtre, ou une fiche
+      // plus haute que sa boîte.
+      if (mode === 'narrow') {
+        const cards = Array.from(track.querySelectorAll<HTMLElement>('article'));
+        const overflows =
+          (stage !== null && stage.scrollHeight > stage.clientHeight + 1) ||
+          track.offsetHeight > viewport.clientHeight + 1 ||
+          cards.some((card) => card.scrollHeight > card.clientHeight + 1);
+
+        if (overflows) {
+          narrowFits.current = false;
+          setMode('off');
+          return;
+        }
+      }
+
+      stickyTopRef.current = stage ? Number.parseFloat(getComputedStyle(stage).top) || 0 : 0;
+      setStickyTop(stickyTopRef.current);
+
       // La distance à parcourir, c'est ce qui dépasse de la fenêtre. On
       // réserve autant de hauteur de défilement, d'où le rapport 1:1.
       distance.current = Math.max(0, track.scrollWidth - viewport.clientWidth);
-      setHeight(window.innerHeight + distance.current);
+      lastWidth = window.innerWidth;
+      lastHeight = window.innerHeight;
+      setHeight((stage?.offsetHeight ?? window.innerHeight) + distance.current);
+      setStep(count > 1 ? distance.current / (count - 1) : 0);
       update();
+    };
+
+    const onResize = () => {
+      const urlBarOnly =
+        window.innerWidth === lastWidth &&
+        Math.abs(window.innerHeight - lastHeight) < URL_BAR_PX;
+
+      if (urlBarOnly) update();
+      else measure();
     };
 
     measure();
@@ -186,12 +292,12 @@ export function useHorizontalPin(count: number) {
     observer.observe(viewport);
 
     window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', measure);
+    window.addEventListener('resize', onResize);
 
     return () => {
       observer.disconnect();
       window.removeEventListener('scroll', update);
-      window.removeEventListener('resize', measure);
+      window.removeEventListener('resize', onResize);
       if (frame.current) cancelAnimationFrame(frame.current);
       frame.current = 0;
       current.current = 0;
@@ -199,7 +305,9 @@ export function useHorizontalPin(count: number) {
       track.style.transform = '';
       root.style.removeProperty('--progress');
     };
-  }, [pinned, count]);
+    // `mode` et non `pinned` : passer de `wide` à `narrow` change la piste
+    // entière, il faut tout remesurer.
+  }, [mode, count]);
 
   /**
    * Amène une carte à l'écran depuis son identifiant d'ancre. Une fois la
@@ -238,8 +346,11 @@ export function useHorizontalPin(count: number) {
     pinRef,
     viewportRef,
     trackRef,
+    mode,
     pinned,
     height,
+    step,
+    stickyTop,
     activeIndex,
     entered,
     scrollToCard,

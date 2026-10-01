@@ -40,12 +40,8 @@ export default function Hero() {
       </div>
 
       <div className="relative mx-auto -mt-20 w-full max-w-7xl px-4 pb-14 sm:px-8 lg:mt-0 lg:pb-24 lg:pt-36">
-        <div className="flex max-w-xl flex-col items-start gap-6 lg:max-w-2xl">
-          <span className="animate-rise inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-secondary-fixed">
-            <Icon name="verified" size={16} />
-            {site.slogan}
-          </span>
-
+        {/* Centré sous la photo (mobile, tablette), aligné à gauche sur grand écran. */}
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-6 text-center lg:mx-0 lg:max-w-2xl lg:items-start lg:text-left">
           <h1
             className="animate-rise text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
             style={{ animationDelay: '80ms' }}
@@ -57,8 +53,8 @@ export default function Hero() {
             className="animate-rise max-w-[34rem] text-base leading-relaxed text-slate-200 sm:text-lg"
             style={{ animationDelay: '160ms' }}
           >
-            Études, tourisme, affaires ou installation au Canada : votre visa préparé de A à Z depuis
-            Abidjan, entretien compris.
+            Derrière chaque demande de visa, il y a un rêve : étudier, travailler, bâtir une nouvelle
+            vie ailleurs. Nous portons le vôtre avec rigueur et bienveillance.
           </p>
 
           <div
@@ -80,6 +76,16 @@ export default function Hero() {
               Voir nos services
             </a>
           </div>
+
+          {/* Le slogan signe la bannière, comme dans le pied de page : après
+              l'action, pas en étiquette au-dessus du titre. */}
+          <p
+            className="animate-rise flex items-center gap-4 pt-2 text-base font-semibold italic text-secondary-fixed sm:text-lg lg:text-xl"
+            style={{ animationDelay: '320ms' }}
+          >
+            <span aria-hidden="true" className="hidden h-0.5 w-12 rounded-full bg-secondary lg:block" />
+            « {site.slogan} »
+          </p>
         </div>
       </div>
     </section>
