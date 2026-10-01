@@ -274,7 +274,7 @@ export default function Services() {
         sur grand écran, au-dessus de la fiche sur mobile).
       */}
       {mode === 'off' && (
-        <Container className="pt-20 sm:pt-24">
+        <Container className="pt-14 sm:pt-24">
           <div className="reveal mx-auto flex max-w-2xl flex-col items-center gap-5 text-center lg:mx-0 lg:items-start lg:text-left">
             {heading}
 
@@ -296,7 +296,7 @@ export default function Services() {
         avant. Un seul des deux titres est affiché à la fois (`tall:`).
       */}
       {mode === 'narrow' && (
-        <Container className="pt-16 tall:hidden">
+        <Container className="pt-10 sm:pt-16 tall:hidden">
           <h2 className="mx-auto max-w-md text-center text-2xl font-extrabold leading-tight tracking-tight text-primary">
             {title}
           </h2>
@@ -373,10 +373,15 @@ export default function Services() {
             qu'une fiche étirée et à moitié vide. Titre, compteur et fiche
             forment un bloc centré ; shrink-0 pour qu'aucun ne se tasse, et
             que le hook voie un débordement s'il y en a un.
+
+            Sous sm (téléphone), le bloc n'occupe que la hauteur de son
+            contenu, plafonnée à l'écran : centré dans tout l'écran, il
+            laissait un grand blanc au-dessus du titre et après la fiche.
+            L'accroche qui conclut la section suit donc la fiche de près.
           */
-          <div className="sticky top-[72px] flex h-[calc(100svh-72px)] flex-col justify-center gap-4 sm:top-20 sm:h-[calc(100svh-5rem)] sm:gap-6">
+          <div className="sticky top-[72px] flex max-h-[calc(100svh-72px)] flex-col justify-center gap-4 max-sm:pb-2 max-sm:pt-5 sm:top-20 sm:h-[calc(100svh-5rem)] sm:max-h-none sm:gap-6">
             <div className="mx-auto flex w-full max-w-[30rem] shrink-0 flex-col gap-3 px-4 text-center">
-              <h2 className="hidden text-[clamp(1.375rem,3svh,1.75rem)] font-extrabold leading-tight tracking-tight text-primary sm:text-4xl tall:block">
+              <h2 className="hidden text-[clamp(1.375rem,3svh,1.75rem)] font-extrabold leading-tight tracking-tight text-primary max-sm:pt-5 sm:text-4xl tall:block">
                 {title}
               </h2>
               {progress}
@@ -422,7 +427,7 @@ export default function Services() {
         fiche passée.
       */}
       {mode === 'narrow' && (
-        <Container className="pb-20 pt-6 sm:pb-24">
+        <Container className="pb-14 pt-6 sm:pb-24">
           <div className="mx-auto flex max-w-md flex-col items-center gap-5 text-center">
             {intro}
             {cta}
@@ -431,7 +436,7 @@ export default function Services() {
       )}
 
       {/* Bas de section : en mode épinglé, l'écran entier fait déjà la marge. */}
-      {mode === 'off' && <div className="h-16 sm:h-20" />}
+      {mode === 'off' && <div className="h-6 sm:h-20" />}
     </section>
   );
 }

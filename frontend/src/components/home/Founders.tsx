@@ -20,6 +20,27 @@ const VALUES = [
   },
 ];
 
+/*
+  TODO photo : portrait du couple fondateur (cadré en 3:4 sur grand écran,
+  4:3 sur mobile : garder les visages au centre ; au moins 900 × 1200 px),
+  idéalement en situation de voyage ou avec un client. C'est la seule photo
+  du couple sur la page. Remplacer le bloc intérieur par une
+  <img loading="lazy"> avec width/height : le portrait est rendu deux fois
+  (voir Founders), et seul l'exemplaire affiché doit charger l'image.
+*/
+function Portrait() {
+  return (
+    <div className="aspect-[4/3] overflow-hidden rounded-3xl bg-surface-container lg:aspect-[3/4]">
+      <div className="flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-surface-container-high to-surface-container-low px-8 text-center">
+        <Icon name="photo_camera" size={44} className="text-primary/40" />
+        <p className="max-w-[16rem] text-sm leading-relaxed text-on-surface-variant">
+          Emplacement réservé au portrait de Marc-Peniel &amp; Marie-Paule
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Section « À propos », placée juste après la bannière : le couple fondateur
  * est le fil rouge de la page.
@@ -32,23 +53,13 @@ export default function Founders() {
   return (
     <Section id="fondateurs" className="bg-white">
       <div className="grid grid-cols-1 items-start gap-14 lg:grid-cols-12 lg:gap-20">
-        {/* Sur mobile, le récit passe avant la photo. */}
-        <figure className="reveal order-last lg:order-first lg:col-span-5 lg:sticky lg:top-28">
-          {/*
-            TODO photo : portrait du couple fondateur (cadré en 3:4 sur grand écran,
-            4:3 sur mobile : garder les visages au centre ; au moins
-            900 × 1200 px), idéalement en situation de voyage ou avec un
-            client. C'est la seule photo du couple sur la page.
-            Remplacer ce bloc par une <img loading="lazy"> avec width/height.
-          */}
-          <div className="aspect-[4/3] overflow-hidden rounded-3xl bg-surface-container lg:aspect-[3/4]">
-            <div className="flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-surface-container-high to-surface-container-low px-8 text-center">
-              <Icon name="photo_camera" size={44} className="text-primary/40" />
-              <p className="max-w-[16rem] text-sm leading-relaxed text-on-surface-variant">
-                Emplacement réservé au portrait de Marc-Peniel &amp; Marie-Paule
-              </p>
-            </div>
-          </div>
+        {/*
+          Tablette : le récit passe avant la photo. Sur téléphone, la photo
+          est rendue dans la colonne de texte, juste après l'accroche (voir
+          plus bas), et cet exemplaire-ci est masqué.
+        */}
+        <figure className="reveal order-last hidden sm:block lg:order-first lg:col-span-5 lg:sticky lg:top-28">
+          <Portrait />
         </figure>
 
         <div className="reveal flex flex-col gap-6 lg:col-span-7">
@@ -75,7 +86,13 @@ export default function Founders() {
             d'ailleurs.
           </p>
 
-          <div className="flex max-w-[65ch] flex-col gap-4 text-base leading-relaxed text-on-surface-variant">
+          {/* Téléphone uniquement : la photo suit l'accroche (demande du client). */}
+          <figure className="sm:hidden">
+            <Portrait />
+          </figure>
+
+          {/* Masqué sur mobile (à la demande du client) : l'accroche et la citation suffisent. */}
+          <div className="hidden max-w-[65ch] flex-col gap-4 text-base leading-relaxed text-on-surface-variant sm:flex">
             <p>
               Notre complémentarité fait notre force. Chacun apporte son regard, son expertise et
               sa rigueur, et c'est cette union qui nous permet d'accompagner chaque client avec
