@@ -52,13 +52,25 @@ export default function Founders() {
         </figure>
 
         <div className="reveal flex flex-col gap-6 lg:col-span-7">
-          <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl">
-            {/* nowrap : évite la coupure des prénoms composés sur leur trait d'union. */}
-            Nous sommes <span className="whitespace-nowrap">Marc-Peniel</span> et{' '}
-            <span className="whitespace-nowrap">Marie-Paule.</span>
+          {/*
+            Titre et accroche centrés tant que la section tient sur une
+            colonne ; le récit reste aligné à gauche, plus lisible sur la
+            longueur.
+          */}
+          {/*
+            Deux lignes : « Nous sommes », puis les deux prénoms ensemble, jamais
+            séparés (le couple est le sujet de la section). La ligne des prénoms
+            ne passe jamais à la ligne : sa taille suit la largeur de l'écran
+            (vw) sous lg, pour tenir dès 320 px.
+          */}
+          <h2 className="flex flex-col items-center font-extrabold leading-tight tracking-tight text-primary lg:items-start">
+            <span className="text-2xl sm:text-3xl lg:text-4xl">Nous sommes</span>
+            <span className="whitespace-nowrap text-[clamp(1.25rem,6.2vw,2.25rem)] lg:text-[1.875rem] xl:text-4xl">
+              Marc-Peniel et Marie-Paule.
+            </span>
           </h2>
 
-          <p className="text-lg font-medium leading-relaxed text-on-surface sm:text-xl">
+          <p className="text-center text-lg font-medium leading-relaxed text-on-surface sm:text-xl lg:text-left">
             Un couple uni par une même passion : ouvrir les portes du monde à ceux qui rêvent
             d'ailleurs.
           </p>
@@ -87,8 +99,13 @@ export default function Founders() {
             autres.
           </p>
 
-          {/* Valeurs : une simple liste, pas des cartes, pour ne pas répéter la grille des services. */}
-          <ul className="mt-4 grid grid-cols-1 gap-6 border-t border-surface-container pt-8 sm:grid-cols-3">
+          {/*
+            Valeurs : une simple liste, pas des cartes, pour ne pas répéter la
+            grille des services. Masquées sur mobile (à la demande du client) :
+            empilées, elles allongeaient la section sans rien apporter que le
+            récit ne dise déjà.
+          */}
+          <ul className="mt-4 hidden gap-6 border-t border-surface-container pt-8 sm:grid sm:grid-cols-3">
             {VALUES.map((value, index) => (
               <li
                 key={value.title}
@@ -104,7 +121,7 @@ export default function Founders() {
 
           <a
             href="#contact"
-            className="mt-2 inline-flex w-fit items-center gap-2 whitespace-nowrap rounded-xl bg-secondary px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-on-secondary-fixed active:scale-[0.98]"
+            className="mt-2 inline-flex w-fit items-center gap-2 self-center whitespace-nowrap rounded-xl bg-secondary lg:self-start px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-on-secondary-fixed active:scale-[0.98]"
           >
             <span>Démarrer ma procédure</span>
             <Icon name="arrow_forward" size={18} className="arrow-nudge" />

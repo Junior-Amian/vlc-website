@@ -13,6 +13,7 @@ explicitement demandé par le client (« une DA qui parle du couple qui fait voy
 | `docs/CREATION DE SITE .pdf` | Cahier des charges : pages voulues, texte « À propos », couleurs, contact |
 | `docs/Services_Assistanat_Visa.pdf` | Les 5 prestations rédigées par le client |
 | `docs/Espace_Client_Cahier_des_Charges.pdf` | Périmètre MVP de l'espace client (phase 2) |
+| `docs/Contrat_Referent_CU.pdf` | Contrat de référent avec le Collège Universel (Gatineau, QC) : source de la section `#college-universel` |
 | `docs/logo.jpeg` | Logo officiel — source des couleurs de marque |
 | `template/code.html` + `screen.png` | Maquette HTML validée visuellement par le client |
 | `template/DESIGN.md` | Jetons de design proposés (Noto Serif + Plus Jakarta Sans) |
@@ -68,6 +69,15 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
   `index.html`, par ordre alphabétique) : 9 Ko au lieu de 4 Mo. **Toute nouvelle
   icône Material Symbols doit y être ajoutée**, sinon elle s'affiche comme un mot
   (« arrow_forward »). La compilation ne signale rien.
+- **Ne jamais poser `hidden`, `block`, `sm:block`… sur `<Icon>`** : la feuille de
+  Google Fonts déclare `display: inline-block` hors des couches de Tailwind, ce qui
+  l'emporte sur ces utilitaires. Envelopper l'icône dans un `<span>` qui les porte.
+- **Écrans peu hauts** : le variant `short:` (moins de 500 px de haut, téléphone à
+  l'horizontale) est défini par `@custom-variant` dans `index.css`. L'en-tête s'y
+  resserre et la barre d'action du bas y cède son bouton à l'en-tête. Sous `lg`,
+  le bouton « Démarrer ma procédure » vit dans la barre du bas, pas dans l'en-tête.
+- **Champs de formulaire en 16 px sur écran tactile** (`pointer-fine:text-sm`
+  seulement à la souris) : en deçà, iOS agrandit la page au premier appui.
 - **Apparitions au défilement** : ajouter la classe `reveal` à un élément suffit
   (et `style={{ '--i': n }}` pour une cascade dans une liste). La classe
   `is-visible` est posée par `src/lib/useScrollReveal.ts`. L'état caché n'existe
@@ -75,8 +85,23 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
   de 4 s : sans JavaScript, tout reste visible. Ne pas mettre `reveal` sur un
   élément qui a déjà ses propres `transition-*` : l'envelopper plutôt.
 - **Barre d'action mobile** (`src/components/layout/MobileActionBar.tsx`) : elle
-  s'efface sur les sections d'identifiant `accueil`, `contact` et `pied-de-page`.
-  Ne pas renommer ces identifiants sans mettre à jour la liste `HIDE_ON`.
+  s'efface sur les sections d'identifiant `accueil`, `services`, `contact` et
+  `pied-de-page`. Ne pas renommer ces identifiants sans mettre à jour la liste
+  `HIDE_ON`.
+- **Rien de `fixed` à l'intérieur de `<header>`** : son flou (`backdrop-filter`) en
+  fait le bloc de référence des descendants `fixed`. Le menu mobile est donc rendu
+  à côté de l'en-tête ; placé dedans, il était réduit à 49 px et invisible.
+- **Galerie des prestations** (`lib/useHorizontalPin.ts`) : épinglée aussi sur
+  mobile et tablette (mode `narrow`, une fiche pleine largeur par cran de
+  défilement, aimantée par des repères `scroll-snap`) dès que l'écran fait 640 px
+  de haut et que la fiche y tient réellement (mesuré au montage ; sinon, retour à
+  la galerie au doigt, comme sur 320 × 640). Sur mobile, le bloc collant se cale
+  sous l'en-tête (`top-[72px]`, `sm:top-20`) : si la hauteur de l'en-tête change,
+  changer aussi ces valeurs. Il porte le titre de la section, le compteur et la
+  fiche à sa hauteur naturelle (ne pas l'étirer : elle se remplit de blanc) ; sous
+  800 px de haut (variant `tall:`), le titre passe avant la partie épinglée.
+  L'accroche et le bouton concluent la section après la dernière fiche. Les repères sont décalés de 8rem, le `scroll-padding-top` de
+  la page : changer l'un impose de changer l'autre.
 - **`react-router-dom` est figé en 6.x** : `vite-react-ssg` déclare `^6.14.1` en peer.
   Ne pas monter en v7 sans vérifier que l'outil le supporte.
 - Côté PHP, les colonnes modifiables passent obligatoirement par `$fillable`
@@ -89,7 +114,7 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
 **Fait**
 
 - Site vitrine en page unique, pré-rendu, déployable tel quel : bannière, à propos
-  (fondateurs), les 5 prestations visa, témoignages, annonce espace client, contact.
+  (fondateurs), les 6 prestations, partenariat Collège Universel, témoignages, annonce espace client, contact.
 - Fichiers de déploiement : `.htaccess` (URL propres, HTTPS, cache, en-têtes de
   sécurité), `robots.txt`, `sitemap.xml`.
 - Socle de l'API PHP : routeur avec middlewares, validateur, PDO, journalisation,
@@ -127,12 +152,17 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
 
 - **Le logo mentionne « Production Agricole »**, une quatrième activité absente du
   cahier des charges et du site. À trancher : l'ajouter ou retirer la mention.
+- **Collège Universel : autorisation écrite à obtenir.** Le contrat de référent
+  exige l'accord préalable du collège pour utiliser son nom et son logo dans nos
+  supports. La section `CollegePartner.tsx` cite le nom sans le logo (`TODO logo`).
+  Elle ne fait aucune promesse d'admission ni de visa : le contrat interdit au
+  référent d'engager le collège. Ne pas y ajouter la commission.
 - **Adresse professionnelle à créer** : le site affiche `contact@visilioncorporate.com`,
   qui n'existe pas encore. Le PDF utilise `infovisilioncorporate@gmail.com`.
-- **« Contrat de travail Canada »** figure dans les pages voulues du cahier des
-  charges, mais pas dans `docs/Services_Assistanat_Visa.pdf`. Le site suit ce second
-  PDF (5 prestations visa : étudiant, résidence permanente, visiteur, affaires,
-  sport) ; l'offre a donc été retirée. À confirmer avec le client.
+- **Texte du « Contrat de travail au Canada » à faire valider.** Prestation
+  confirmée par le client le 26/09/2026 (voir l'historique), mais il n'en a pas
+  fourni le texte : titre, accroche et description de `services.ts` sont de notre
+  rédaction.
 - **Pages légales à rédiger** : mentions légales et politique de confidentialité
   (le formulaire collecte des données personnelles). Les liens désactivés de la
   maquette ont été retirés du pied de page en attendant les textes.
@@ -160,11 +190,16 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
   exigé d'y intégrer les quatre couleurs. Base inchangée (marine + ocre, Poppins).
   **Le site ne présente que les 5 prestations de `docs/Services_Assistanat_Visa.pdf`**
   (demande explicite de l'utilisateur) : visa étudiant, résidence permanente, visa
-  visiteur, visa d'affaires, visa sport. Billetterie, courtage et import-export n'y
+  visiteur, visa d'affaires, visa sport — plus, depuis le 26/09, le contrat de
+  travail au Canada (voir plus bas). Billetterie, courtage et import-export n'y
   figurent plus. Chaque prestation porte une couleur du logo (`color` dans
   `src/data/services.ts`), reprise dans les témoignages et le pied de page. Jetons
   `brand-*` dans `index.css`, classes dans `src/components/ui/brand.ts`.
   Photos du couple et des clients encore à fournir (emplacements marqués `TODO photo`).
+- **Sixième prestation (26/09/2026) : contrat de travail au Canada** (résidence
+  temporaire), ouverte pour l'instant aux métiers de la santé et de l'éducation
+  préscolaire. Placée après la résidence permanente, couleur rouge. Si le client
+  élargit les secteurs, mettre à jour l'accroche dans `services.ts`.
 - Les contrastes mesurés lors de cette tentative restent valables et utiles :
   sur fond clair, l'or `#E0A010` ne donne que **2,17** et ne peut pas porter de texte ;
   le rouge `#F70E3B` plafonne à **3,93** et ne convient pas au texte courant non plus.

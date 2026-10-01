@@ -16,9 +16,14 @@ export type Service = {
 
 /*
   Les cinq prestations de docs/Services_Assistanat_Visa.pdf, dans le même
-  ordre : ce sont les seuls services présentés sur le site. La description
-  reprend le texte du client ; les destinations viennent du cahier des
-  charges (docs/CREATION DE SITE .pdf).
+  ordre, plus le contrat de travail au Canada, ajouté à la demande du client
+  le 26/09/2026 et placé après la résidence permanente. La description des
+  cinq premières reprend le texte du client ; celle du contrat de travail a
+  été rédigée par nous (à faire valider). Les destinations viennent du
+  cahier des charges (docs/CREATION DE SITE .pdf).
+
+  Six prestations pour quatre couleurs : deux couleurs reviennent, jamais
+  sur deux fiches voisines de la galerie.
 */
 export const services: Service[] = [
   {
@@ -39,6 +44,17 @@ export const services: Service[] = [
     tagline: "Le bon programme d'immigration, et un suivi jusqu'à votre statut.",
     description:
       "Vous souhaitez vous installer durablement dans un nouveau pays ? Nous évaluons votre profil, identifions le programme le plus adapté à votre situation et vous guidons à chaque étape de la procédure d'immigration jusqu'à l'obtention de votre statut de résident permanent.",
+    destinations: ['Canada'],
+  },
+  {
+    // Rédaction provisoire : pas de texte client pour cette prestation.
+    slug: 'contrat-travail-canada',
+    icon: 'work',
+    color: 'red',
+    title: 'Contrat de travail au Canada',
+    tagline: "Ouvert en ce moment aux métiers de la santé et de l'éducation préscolaire.",
+    description:
+      "Vous exercez dans la santé ou dans l'éducation préscolaire ? Ces deux secteurs recrutent au Canada. Nous évaluons votre profil et vos diplômes, constituons votre dossier et vous accompagnons jusqu'au permis de travail, pour une résidence temporaire au Canada.",
     destinations: ['Canada'],
   },
   {

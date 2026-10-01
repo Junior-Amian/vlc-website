@@ -38,7 +38,8 @@ const CHANNELS = [
 export default function ContactDetails() {
   return (
     <div className="flex flex-col gap-8">
-      <div className="reveal">
+      {/* Centré tant que les coordonnées et le formulaire sont empilés. */}
+      <div className="reveal text-center lg:text-left">
         <span className="mb-3 block text-xs font-bold uppercase tracking-widest text-secondary">
           Parlons de votre projet
         </span>
@@ -47,7 +48,7 @@ export default function ContactDetails() {
           Exprimez votre besoin, nous vous accompagnons.
         </h2>
 
-        <p className="mt-4 max-w-[46ch] text-base leading-relaxed text-on-surface-variant">
+        <p className="mx-auto mt-4 max-w-[46ch] text-base leading-relaxed text-on-surface-variant lg:mx-0">
           Dites-nous où vous souhaitez aller et ce qui vous retient : nous étudions votre
           situation et vous répondons avec franchise, sans engagement.
         </p>
@@ -74,22 +75,37 @@ export default function ContactDetails() {
                 <span className="block text-sm text-on-surface-variant">{channel.label}</span>
                 {/*
                   L'adresse email est longue : un cran plus petite sur mobile, et la
-                  flèche décorative y est masquée, pour qu'elle tienne sur une ligne
-                  sans être coupée en plein mot. break-all reste un dernier recours.
+                  flèche décorative y est masquée, pour qu'elle tienne sur une ligne.
+                  Sur les écrans les plus étroits, elle passe à la ligne avant
+                  l'arobase (<wbr>) plutôt qu'en plein mot.
                 */}
                 <span
-                  className={`block break-all font-bold text-primary ${
+                  className={`block font-bold text-primary [overflow-wrap:anywhere] ${
                     channel.icon === 'mail' ? 'text-sm sm:text-base' : 'text-base'
                   }`}
                 >
-                  {channel.value}
+                  {channel.icon === 'mail' ? (
+                    <>
+                      {channel.value.split('@')[0]}
+                      <wbr />@{channel.value.split('@')[1]}
+                    </>
+                  ) : (
+                    channel.value
+                  )}
                 </span>
               </span>
-              <Icon
-                name="arrow_forward"
-                size={20}
-                className="hidden shrink-0 text-on-surface-variant transition-transform group-hover:translate-x-1 group-hover:text-secondary sm:block"
-              />
+              {/*
+                `hidden` est posé sur l'enveloppe et non sur l'icône : la feuille
+                de Google Fonts déclare `display: inline-block` hors des couches
+                de Tailwind, ce qui l'emporte sur les utilitaires d'affichage.
+              */}
+              <span className="hidden shrink-0 sm:block">
+                <Icon
+                  name="arrow_forward"
+                  size={20}
+                  className="text-on-surface-variant transition-transform group-hover:translate-x-1 group-hover:text-secondary"
+                />
+              </span>
             </a>
           </li>
         ))}

@@ -5,6 +5,9 @@ import { site, whatsappLink } from '../../data/site';
 import { services } from '../../data/services';
 
 const HEADING_CLASS = 'text-sm font-bold text-primary';
+// Colonnes et listes centrées sur mobile (une seule colonne), à gauche dès sm.
+const COLUMN_CLASS = 'flex flex-col items-center gap-4 text-center sm:items-start sm:text-left';
+const LIST_CLASS = 'flex flex-col items-center text-sm text-on-surface-variant sm:items-start';
 // min-h-11 : cibles tactiles de 44px, confortables au doigt sur mobile.
 const LINK_CLASS = 'inline-flex min-h-11 items-center transition-colors hover:text-secondary lg:min-h-9';
 
@@ -29,15 +32,15 @@ export default function Footer() {
 
       <div className="mx-auto max-w-7xl px-4 pt-16 sm:px-8 lg:pt-20">
         <div className="grid grid-cols-1 gap-12 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
-          {/* Marque */}
-          <div className="flex flex-col gap-4 sm:col-span-2 lg:col-span-4 lg:pr-8">
+          {/* Marque : centrée tant qu'elle occupe seule la largeur (mobile, tablette). */}
+          <div className="flex flex-col items-center gap-4 text-center sm:col-span-2 lg:col-span-4 lg:items-start lg:pr-8 lg:text-left">
             <img
               src={asset('/logo.jpeg')}
               alt={site.name}
               width={96}
               height={96}
               loading="lazy"
-              className="-ml-2 h-24 w-auto self-start object-contain"
+              className="h-24 w-auto object-contain lg:-ml-2"
             />
             <p className="text-sm font-semibold italic text-secondary">« {site.slogan} »</p>
             <p className="max-w-[36ch] text-sm leading-relaxed text-on-surface-variant">
@@ -47,9 +50,15 @@ export default function Footer() {
           </div>
 
           {/* Services : le carré reprend la couleur de chaque prestation dans la page. */}
-          <nav aria-label="Nos services" className="flex flex-col gap-4 lg:col-span-3">
+          {/*
+            Sur tablette (deux colonnes), les six prestations tiennent seules
+            la colonne de gauche sur deux rangées, face à la navigation et aux
+            coordonnées empilées : sinon, les coordonnées restaient seules sur
+            leur rangée, la moitié droite vide.
+          */}
+          <nav aria-label="Nos services" className={`${COLUMN_CLASS} sm:row-span-2 lg:col-span-3 lg:row-span-1`}>
             <h2 className={HEADING_CLASS}>Nos services</h2>
-            <ul className="flex flex-col text-sm text-on-surface-variant">
+            <ul className={LIST_CLASS}>
               {services.map((service) => (
                 <li key={service.slug}>
                   <a href={`#${service.slug}`} className={`gap-2.5 ${LINK_CLASS}`}>
@@ -64,9 +73,9 @@ export default function Footer() {
             </ul>
           </nav>
 
-          <nav aria-label="Plan du site" className="flex flex-col gap-4 lg:col-span-2">
+          <nav aria-label="Plan du site" className={`${COLUMN_CLASS} lg:col-span-2`}>
             <h2 className={HEADING_CLASS}>Navigation</h2>
-            <ul className="flex flex-col text-sm text-on-surface-variant">
+            <ul className={LIST_CLASS}>
               {site.nav.map((item) => (
                 <li key={item.href}>
                   <a href={item.href} className={LINK_CLASS}>
@@ -77,9 +86,9 @@ export default function Footer() {
             </ul>
           </nav>
 
-          <div className="flex flex-col gap-4 lg:col-span-3">
+          <div className={`${COLUMN_CLASS} lg:col-span-3`}>
             <h2 className={HEADING_CLASS}>Nous contacter</h2>
-            <ul className="flex flex-col text-sm text-on-surface-variant">
+            <ul className={LIST_CLASS}>
               <li>
                 <a href={site.contact.phoneHref} className={`gap-2.5 ${LINK_CLASS}`}>
                   <Icon name="call" size={18} className="shrink-0 text-secondary" />
