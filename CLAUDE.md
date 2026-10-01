@@ -100,6 +100,9 @@ PHP et MySQL ne sont **pas dans le PATH**. Ils viennent de XAMPP :
   changer aussi ces valeurs. Il porte le titre de la section, le compteur et la
   fiche à sa hauteur naturelle (ne pas l'étirer : elle se remplit de blanc) ; sous
   800 px de haut (variant `tall:`), le titre passe avant la partie épinglée.
+  Sous `sm`, le bloc collant n'a que la hauteur de son contenu (plafonnée à
+  l'écran par `max-h`) : centré dans tout l'écran, il laissait un grand blanc
+  au-dessus du titre et après la fiche. À partir de `sm`, il reste plein écran.
   L'accroche et le bouton concluent la section après la dernière fiche. Les repères sont décalés de 8rem, le `scroll-padding-top` de
   la page : changer l'un impose de changer l'autre.
 - **`react-router-dom` est figé en 6.x** : `vite-react-ssg` déclare `^6.14.1` en peer.
