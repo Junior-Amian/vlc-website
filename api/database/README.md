@@ -24,9 +24,9 @@ Renseigner ensuite `api/.env` (modèle : `api/.env.example`) :
 - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` ;
 - `JWT_SECRET` : **obligatoire**, sinon la connexion au panel échoue. Le
   générer avec `php -r "echo bin2hex(random_bytes(32));"`.
-- `APP_ENV=production` et **`APP_DEBUG=false`** : le modèle est réglé pour le
-  poste de développement, où les erreurs détaillées s'affichent. Laissé à
-  `true` en ligne, l'API montrerait le détail de ses erreurs aux visiteurs.
+- `APP_ENV=production`, et **`APP_DEBUG=false`** (valeur du modèle) : à
+  `true`, l'API montrerait le détail de ses erreurs aux visiteurs. Ne le
+  passer à `true` que sur le poste de développement.
 - `APP_URL` : l'adresse du site (lien des emails de demande de contact).
 
 ## 2. Fichiers sur le serveur
@@ -85,7 +85,13 @@ cherche.
   « connectée ».
 - Se connecter sur `https://visilioncorporate.com/admin`.
 - 5 tentatives de connexion par adresse IP toutes les 10 minutes, au-delà,
-  attendre.
+  attendre. Un compte (panel ou espace client) est aussi bloqué un quart
+  d'heure après 10 échecs, d'où qu'ils viennent : même le bon mot de passe
+  est alors refusé. Pour débloquer plus tôt, vider `api/storage/cache/login/`.
+- Tant que le certificat SSL n'est pas actif, commenter dans `.htaccess` (à
+  la racine du site) la redirection HTTPS **et** la ligne
+  `Strict-Transport-Security` : celle-ci ordonne aux navigateurs de n'utiliser
+  que HTTPS pendant un an.
 
 ## 5. Statistiques du tableau de bord
 

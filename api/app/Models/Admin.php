@@ -34,6 +34,14 @@ final class Admin extends Model
             ->execute(['hash' => $hash, 'id' => $id]);
     }
 
+    /** Ferme toutes les sessions ouvertes du compte (déconnexion). */
+    public function revokeSessions(string $id): void
+    {
+        $this->db()
+            ->prepare('UPDATE `admins` SET `token_version` = `token_version` + 1 WHERE `id` = :id')
+            ->execute(['id' => $id]);
+    }
+
     /**
      * Données exposées au panel : jamais le hachage du mot de passe.
      *

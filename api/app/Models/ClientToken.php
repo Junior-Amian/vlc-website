@@ -27,15 +27,22 @@ final class ClientToken extends Model
     ];
 
     /**
-     * Crée un lien et rend le jeton en clair, à placer dans l'adresse. Les
-     * liens du même type encore valides pour ce client sont annulés : seul
-     * le dernier envoyé fonctionne.
+     * Crée un lien et rend le jeton en clair, à placer dans l'adresse.
+     *
+     * $revokePrevious : les liens du même type encore valides pour ce client
+     * sont annulés, seul le dernier envoyé fonctionne. C'est le cas quand
+     * l'équipe renvoie une invitation. Une demande faite depuis la page
+     * publique (« mot de passe oublié » sur un compte pas encore activé) les
+     * laisse valables : n'importe qui connaissant l'email pourrait sinon
+     * annuler le lien que l'équipe a transmis au client.
      */
-    public function issue(string $clientId, string $type): string
+    public function issue(string $clientId, string $type, bool $revokePrevious = true): string
     {
-        $this->db()
-            ->prepare('UPDATE `client_tokens` SET `used_at` = NOW() WHERE `client_id` = :client AND `type` = :type AND `used_at` IS NULL')
-            ->execute(['client' => $clientId, 'type' => $type]);
+        if ($revokePrevious) {
+            $this->db()
+                ->prepare('UPDATE `client_tokens` SET `used_at` = NOW() WHERE `client_id` = :client AND `type` = :type AND `used_at` IS NULL')
+                ->execute(['client' => $clientId, 'type' => $type]);
+        }
 
         $token = bin2hex(random_bytes(32));
 
@@ -74,9 +81,17 @@ final class ClientToken extends Model
         return $row === false ? null : $row;
     }
 
-    public function markUsed(string $id): void
+    /**
+     * Annule tous les liens encore valables du client, quel que soit leur
+     * type. Appelé dès qu'il choisit un mot de passe : un ancien lien
+     * d'invitation resté dans une conversation ne doit plus permettre de le
+     * changer.
+     */
+    public function revokeAll(string $clientId): void
     {
-        $this->update($id, ['used_at' => date('Y-m-d H:i:s')]);
+        $this->db()
+            ->prepare('UPDATE `client_tokens` SET `used_at` = NOW() WHERE `client_id` = :client AND `used_at` IS NULL')
+            ->execute(['client' => $clientId]);
     }
 
     /** Date d'expiration de la dernière invitation en attente, ou null. */

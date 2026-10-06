@@ -26,6 +26,12 @@ final class DocumentStore
 {
     public const MAX_BYTES = 10 * 1024 * 1024;
 
+    /**
+     * Fichiers par pièce demandée : de quoi photographier un document page
+     * par page, sans qu'un compte puisse remplir l'espace de l'hébergement.
+     */
+    public const MAX_FILES_PER_ITEM = 10;
+
     private const BLOCKED_EXTENSIONS = [
         'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar', 'pht', 'phps',
         'exe', 'msi', 'com', 'bat', 'cmd', 'scr', 'pif', 'cpl', 'dll', 'sys',

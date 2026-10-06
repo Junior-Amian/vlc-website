@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Client;
 
 use App\Auth\ClientSession;
+use App\Auth\LoginThrottle;
 use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
@@ -27,6 +28,9 @@ final class AuthController extends Controller
      */
     private const PASSWORD_RULES = 'required|string|min:8|max:200|confirmed';
 
+    /** Compteur d'échecs propre à l'espace client (voir LoginThrottle). */
+    private const THROTTLE = 'client';
+
     public function login(Request $request): Response
     {
         $data = $this->validate($request, [
@@ -34,17 +38,29 @@ final class AuthController extends Controller
             'password' => 'required|string|max:200',
         ], ['email' => 'adresse email', 'password' => 'mot de passe']);
 
+        $email = (string) $data['email'];
+
+        // Avant le mot de passe : voir Admin\AuthController::login.
+        $retryAfter = LoginThrottle::retryAfter(self::THROTTLE, $email);
+
+        if ($retryAfter !== null) {
+            return LoginThrottle::response($retryAfter);
+        }
+
         $clients = new Client();
-        $client = $clients->findByEmail((string) $data['email']);
+        $client = $clients->findByEmail($email);
 
         // Hachage vérifié même sans compte : la durée de la réponse ne doit
         // pas révéler les adresses enregistrées (voir Admin\AuthController).
         $hash = $client['password_hash'] ?? '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
 
         if (!password_verify((string) $data['password'], (string) $hash) || $client === null || !Client::isActive($client)) {
+            LoginThrottle::recordFailure(self::THROTTLE, $email);
+
             return Response::error('Email ou mot de passe incorrect.', 401);
         }
 
+        LoginThrottle::clear(self::THROTTLE, $email);
         $id = (string) $client['id'];
 
         if (password_needs_rehash((string) $client['password_hash'], PASSWORD_DEFAULT)) {
@@ -57,8 +73,21 @@ final class AuthController extends Controller
         return ClientSession::start(Response::success(Client::present($client)), $client);
     }
 
+    /**
+     * Ferme la session ici et sur tous les appareils (voir
+     * Admin\AuthController::logout). La route n'exige pas de session
+     * valide : sans elle, on se contente d'effacer le cookie.
+     */
     public function logout(Request $request): Response
     {
+        $claims = ClientSession::claims($request);
+        $clients = new Client();
+        $client = $claims !== null ? $clients->find($claims['id']) : null;
+
+        if ($client !== null && (int) $client['token_version'] === $claims['ver']) {
+            $clients->revokeSessions((string) $client['id']);
+        }
+
         return ClientSession::end(Response::success());
     }
 
@@ -72,7 +101,8 @@ final class AuthController extends Controller
         if ($client !== null && Client::isActive($client)) {
             ClientAccess::sendReset($client);
         } elseif ($client !== null) {
-            ClientAccess::invite($client);
+            // Sans annuler l'invitation déjà transmise par l'équipe.
+            ClientAccess::invite($client, revokePrevious: false);
         }
 
         return Response::success(
@@ -116,7 +146,8 @@ final class AuthController extends Controller
         $id = (string) $access['id'];
 
         $clients->setPassword($id, password_hash((string) $data['password'], PASSWORD_DEFAULT));
-        $tokens->markUsed((string) $access['token_id']);
+        // Ce lien et tous les autres encore valables (voir ClientToken::revokeAll).
+        $tokens->revokeAll($id);
         $clients->update($id, ['last_login_at' => date('Y-m-d H:i:s')]);
 
         $client = $clients->find($id);

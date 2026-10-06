@@ -237,11 +237,36 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
   formats libres sauf programmes et pages web. PHP doit accepter un peu plus :
   `api/public/.user.ini` (PHP-FPM) et le bloc `mod_php` du `.htaccess` fixent
   12 Mo. Côté front, l'envoi passe par `XMLHttpRequest` pour afficher sa
-  progression (`uploadDocument`, `src/client/api.ts`).
+  progression (`uploadDocument`, `src/client/api.ts`). Au plus 10 fichiers
+  par pièce (`DocumentStore::MAX_FILES_PER_ITEM`) : c'est ce qui borne
+  l'espace disque occupé par un compte.
 - **Limites de débit** : `RateLimitMiddleware` (5 écritures / 10 min / IP, contact
   et connexion) ; une route aux besoins différents passe par une sous-classe qui
   redéfinit `MAX_ATTEMPTS` (`TrackRateLimitMiddleware` : 120 pour la mesure
-  d'audience).
+  d'audience, `MessageRateLimitMiddleware` : 20, `UploadRateLimitMiddleware` :
+  30 envois par pièce). Le compteur suit l'IP **et** l'adresse de la route.
+  En plus, `App\Auth\LoginThrottle` bloque un compte 15 min après 10 échecs
+  de connexion, quelle que soit l'IP, compté sur l'email saisi (qu'un compte
+  existe ou non) ; pendant le blocage, même le bon mot de passe est refusé.
+- **Déconnexion = toutes les sessions du compte** : elle incrémente
+  `token_version` (`revokeSessions()`), seul moyen d'invalider un JWT avant
+  son expiration. Un cookie volé ne survit donc pas à la déconnexion, mais
+  se déconnecter sur le téléphone déconnecte aussi l'ordinateur.
+- **Liens d'accès de l'espace client** : l'équipe qui renvoie une invitation
+  annule les précédentes ; « mot de passe oublié » sur un compte pas encore
+  activé en ajoute une sans annuler celle de l'équipe. Choisir son mot de
+  passe annule tous les liens encore valables (`ClientToken::revokeAll`).
+- **Politique de contenu (CSP) et HSTS** dans `frontend/public/.htaccess`,
+  sur les pages `.html` seulement (pas sur l'API : les PDF ne s'afficheraient
+  plus). Les scripts intégrés aux pages sont admis par empreinte SHA-256,
+  calculée après chaque compilation par `scripts/csp.mjs` (appelé par
+  `npm run build`) à la place des marqueurs `__CSP_…__` : ne jamais les
+  retirer, la compilation échouerait. Toute nouvelle origine externe
+  (police, image, script, API) doit être ajoutée à la CSP, sinon le
+  navigateur la bloque sans erreur de compilation. HSTS va de pair avec la
+  redirection HTTPS : à commenter avec elle tant que le SSL n'est pas actif.
+  Vérifié le 06/10/2026 dans Chrome derrière Apache (XAMPP, port à part) :
+  aucune violation sur le site, le panel et l'espace client, connectés ou non.
 - **Routes du panel et de l'espace client** (`/admin/*`, `/client/*` de l'API) : `CsrfMiddleware` exige l'en-tête
   `X-Requested-With` sur toute écriture (posé par `src/lib/api.ts`), et
   `AdminAuthMiddleware` relit le compte à chaque requête (session en cookie

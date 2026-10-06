@@ -73,6 +73,21 @@
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+
+    # HTTPS obligatoire pendant un an, même si l'on tape « http:// ». Va de
+    # pair avec la redirection HTTPS en tête de fichier : à commenter avec
+    # elle tant que le certificat SSL n'est pas actif.
+    Header always set Strict-Transport-Security "max-age=31536000"
+
+    # Politique de contenu des pages (pas des réponses de l'API, que ce
+    # fichier couvre aussi quand elle est placée dans public_html/api : un
+    # PDF ne s'afficherait plus). Les scripts intégrés aux pages sont admis
+    # par leur empreinte, que scripts/csp.mjs écrit ici à chaque compilation
+    # (les marqueurs __CSP_…__ ne doivent pas être retirés). Styles en ligne
+    # admis : les pages pré-rendues portent des attributs style.
+    <FilesMatch "\.html$">
+        Header always set Content-Security-Policy "default-src 'self'; script-src 'self' __CSP_SCRIPT_HASHES__; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'__CSP_API_ORIGIN__; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    </FilesMatch>
 </IfModule>
 
 Options -Indexes

@@ -66,7 +66,8 @@ VITE_API_PROXY=http://127.0.0.1:8000 npm run dev   # http://localhost:5173
 ```
 
 Sans `api/.env`, l'API ne démarre pas. En local, `MAIL_TRANSPORT=log` écrit
-les emails dans `api/storage/logs/` au lieu de les envoyer.
+les emails dans `api/storage/logs/` au lieu de les envoyer, et
+`APP_DEBUG=true` affiche le détail des erreurs (jamais en ligne).
 
 ## Commandes du front
 
@@ -107,5 +108,11 @@ fonctionnent pas.
   servis uniquement à leur propriétaire et à l'équipe.
 - Identifiants en UUID v4 : ils ne révèlent ni le nombre de lignes ni leur
   ordre.
+- Connexion : 5 essais par adresse IP toutes les 10 minutes, et blocage d'un
+  compte pendant un quart d'heure après 10 échecs, d'où qu'ils viennent.
+  La déconnexion ferme toutes les sessions du compte.
+- Politique de contenu (CSP) stricte et HSTS sur les pages du site
+  (`frontend/public/.htaccess`, complété à la compilation par
+  `frontend/scripts/csp.mjs`).
 - Ne sont jamais versionnés : `api/.env`, les documents des clients, les
   images envoyées depuis le panel, les journaux.

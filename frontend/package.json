@@ -6,8 +6,8 @@
   "description": "Site vitrine VISILION CORPORATE - React + Vite, pre-rendu statique",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite-react-ssg build",
-    "build:spa": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite-react-ssg build && node scripts/csp.mjs",
+    "build:spa": "tsc --noEmit && vite build && node scripts/csp.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "content:pull": "node scripts/pull-content.mjs"

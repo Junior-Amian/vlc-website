@@ -23,11 +23,13 @@ final class ClientAccess
 
     /**
      * @param array<string, mixed> $client
+     * @param bool $revokePrevious Faux pour une demande venue de la page publique (voir ClientToken::issue).
      * @return array{url: string, emailSent: bool, expiresAt: string}
      */
-    public static function invite(array $client): array
+    public static function invite(array $client, bool $revokePrevious = true): array
     {
-        $url = DossierMail::url(self::PAGES['invite'] . (new ClientToken())->issue((string) $client['id'], 'invite'));
+        $token = (new ClientToken())->issue((string) $client['id'], 'invite', $revokePrevious);
+        $url = DossierMail::url(self::PAGES['invite'] . $token);
 
         $sent = DossierMail::toClient(
             $client,

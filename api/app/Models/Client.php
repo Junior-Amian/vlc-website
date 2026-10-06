@@ -31,6 +31,14 @@ final class Client extends Model
             ->execute(['hash' => $hash, 'id' => $id]);
     }
 
+    /** Ferme toutes les sessions ouvertes du compte (déconnexion). */
+    public function revokeSessions(string $id): void
+    {
+        $this->db()
+            ->prepare('UPDATE `clients` SET `token_version` = `token_version` + 1 WHERE `id` = :id')
+            ->execute(['id' => $id]);
+    }
+
     /** @param array<string, mixed> $client */
     public static function isActive(array $client): bool
     {

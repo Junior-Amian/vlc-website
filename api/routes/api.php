@@ -33,6 +33,7 @@ use App\Middleware\CsrfMiddleware;
 use App\Middleware\MessageRateLimitMiddleware;
 use App\Middleware\RateLimitMiddleware;
 use App\Middleware\TrackRateLimitMiddleware;
+use App\Middleware\UploadRateLimitMiddleware;
 
 $router->get('/health', [HealthController::class, 'index']);
 
@@ -111,7 +112,8 @@ $router->group('/client', static function (Router $router): void {
     $router->group('', static function (Router $router): void {
         $router->get('/me', [ClientDossierController::class, 'show']);
         $router->put('/me/profile', [ClientDossierController::class, 'saveProfile']);
-        $router->post('/items/{id}/documents', [ClientDossierController::class, 'upload']);
+        // 30 envois par pièce toutes les 10 minutes (UploadRateLimitMiddleware).
+        $router->post('/items/{id}/documents', [ClientDossierController::class, 'upload'], [UploadRateLimitMiddleware::class]);
         $router->get('/documents/{id}', [ClientDossierController::class, 'download']);
         $router->delete('/documents/{id}', [ClientDossierController::class, 'destroyDocument']);
         // 20 messages toutes les 10 minutes (MessageRateLimitMiddleware).

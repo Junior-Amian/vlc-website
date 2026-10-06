@@ -77,6 +77,13 @@ final class DossierController extends Controller
             return Response::error('Cette pièce est déjà validée par votre conseiller.', 409);
         }
 
+        if (count((new Document())->forItem((string) $item['id'])) >= DocumentStore::MAX_FILES_PER_ITEM) {
+            return Response::error(
+                sprintf('%d fichiers au plus par pièce : retirez-en un avant d\'en ajouter un autre.', DocumentStore::MAX_FILES_PER_ITEM),
+                409
+            );
+        }
+
         $stored = DocumentStore::store($request->files['file'] ?? null, (string) $dossier['id']);
         (new Document())->create(['checklist_item_id' => (string) $item['id'], ...$stored]);
 
