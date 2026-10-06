@@ -1,8 +1,9 @@
 import Icon from '../ui/Icon';
 import { asset } from '../../lib/asset';
 import { brand, LOGO_ORDER } from '../ui/brand';
-import { site, whatsappLink } from '../../data/site';
-import { services } from '../../data/services';
+import { phoneHref, site, whatsappLink } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
+import { useNav } from '../../content/useNav';
 
 const HEADING_CLASS = 'text-sm font-bold text-primary';
 // Colonnes et listes centrées sur mobile (une seule colonne), à gauche dès sm.
@@ -19,6 +20,8 @@ const LINK_CLASS = 'inline-flex min-h-11 items-center transition-colors hover:te
   politique de confidentialité sera nécessaire avant la mise en ligne).
 */
 export default function Footer() {
+  const { company, services } = useContent();
+  const nav = useNav();
   const year = new Date().getFullYear();
 
   return (
@@ -42,10 +45,9 @@ export default function Footer() {
               loading="lazy"
               className="h-24 w-auto object-contain lg:-ml-2"
             />
-            <p className="text-sm font-semibold italic text-secondary">« {site.slogan} »</p>
+            <p className="text-sm font-semibold italic text-secondary">« {company.slogan} »</p>
             <p className="max-w-[36ch] text-sm leading-relaxed text-on-surface-variant">
-              Marc-Peniel et Marie-Paule vous accompagnent depuis Abidjan dans toutes vos
-              démarches de visa.
+              {company.footerText}
             </p>
           </div>
 
@@ -59,7 +61,7 @@ export default function Footer() {
           <nav aria-label="Nos services" className={`${COLUMN_CLASS} sm:row-span-2 lg:col-span-3 lg:row-span-1`}>
             <h2 className={HEADING_CLASS}>Nos services</h2>
             <ul className={LIST_CLASS}>
-              {services.map((service) => (
+              {services.items.map((service) => (
                 <li key={service.slug}>
                   <a href={`#${service.slug}`} className={`gap-2.5 ${LINK_CLASS}`}>
                     <span
@@ -76,7 +78,7 @@ export default function Footer() {
           <nav aria-label="Plan du site" className={`${COLUMN_CLASS} lg:col-span-2`}>
             <h2 className={HEADING_CLASS}>Navigation</h2>
             <ul className={LIST_CLASS}>
-              {site.nav.map((item) => (
+              {nav.map((item) => (
                 <li key={item.href}>
                   <a href={item.href} className={LINK_CLASS}>
                     {item.label}
@@ -90,14 +92,14 @@ export default function Footer() {
             <h2 className={HEADING_CLASS}>Nous contacter</h2>
             <ul className={LIST_CLASS}>
               <li>
-                <a href={site.contact.phoneHref} className={`gap-2.5 ${LINK_CLASS}`}>
+                <a href={phoneHref(company.phoneIntl)} className={`gap-2.5 ${LINK_CLASS}`}>
                   <Icon name="call" size={18} className="shrink-0 text-secondary" />
-                  {site.contact.phoneIntl}
+                  {company.phoneIntl}
                 </a>
               </li>
               <li>
                 <a
-                  href={whatsappLink()}
+                  href={whatsappLink(company.whatsapp)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`gap-2.5 ${LINK_CLASS}`}
@@ -107,14 +109,14 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href={`mailto:${site.contact.email}`} className={`gap-2.5 ${LINK_CLASS}`}>
+                <a href={`mailto:${company.email}`} className={`gap-2.5 ${LINK_CLASS}`}>
                   <Icon name="mail" size={18} className="shrink-0 text-secondary" />
-                  <span className="break-all">{site.contact.email}</span>
+                  <span className="break-all">{company.email}</span>
                 </a>
               </li>
               <li className="flex min-h-11 items-center gap-2.5 lg:min-h-9">
                 <Icon name="location_on" size={18} className="shrink-0 text-secondary" />
-                {site.contact.city}
+                {company.city}
               </li>
             </ul>
           </div>

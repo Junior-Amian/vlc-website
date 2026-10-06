@@ -11,6 +11,6 @@ $origins = array_filter(
 return [
     'allowed_origins' => $origins === [] ? ['http://localhost:5173'] : $origins,
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'X-HTTP-Method-Override'],
+    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With'],
     'max_age'         => 86400,
 ];

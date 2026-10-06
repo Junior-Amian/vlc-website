@@ -1,37 +1,14 @@
 /**
- * Informations d'entreprise centralisées.
+ * Informations fixes du site.
  *
- * Tout ce qui est susceptible de changer (téléphone, email, adresse) est ici
- * pour n'avoir qu'un seul fichier à modifier.
+ * Coordonnées, slogan et description se modifient dans le panel
+ * d'administration (section « Coordonnées ») : voir content/types.ts.
+ * Restent ici les données liées au code, qu'un changement de texte ne doit
+ * pas pouvoir casser.
  */
 export const site = {
   name: 'VISILION CORPORATE',
-  shortName: 'VISILION',
-  slogan: 'Notre vision, votre satisfaction',
   baseUrl: 'https://visilioncorporate.com',
-
-  description:
-    "Cabinet d'assistanat visa à Abidjan. Études, tourisme, affaires, sport, travail ou résidence permanente : nous préparons votre dossier de A à Z, quelle que soit votre destination.",
-
-  contact: {
-    phoneDisplay: '01 51 46 30 51',
-    phoneIntl: '+225 01 51 46 30 51',
-    phoneHref: 'tel:+2250151463051',
-    whatsapp: '2250151463051',
-    // NOTE : adresse professionnelle à créer (le PDF mentionne encore
-    // infovisilioncorporate@gmail.com comme adresse de travail).
-    email: 'contact@visilioncorporate.com',
-    city: "Abidjan, Côte d'Ivoire",
-    partners: 'Représentations partenaires : Canada, France & Turquie',
-    hours: 'Lundi au vendredi : 08h30 – 18h00 • Samedi : 09h00 – 14h00',
-  },
-
-  stats: [
-    { value: '98%', label: 'Taux de satisfaction', hint: 'Accompagnement méticuleux' },
-    { value: '+1 200', label: 'Dossiers réussis', hint: 'Étudiants, familles & cadres' },
-    { value: '45+', label: 'Destinations', hint: 'Canada, Schengen, Asie, Golfe' },
-    { value: '100%', label: 'Suivi personnalisé', hint: 'Conseiller dédié sans intermédiaire' },
-  ],
 
   /*
     Navigation par ancres : le site est sur une page unique. Chaque `href`
@@ -48,6 +25,12 @@ export const site = {
 /** Message prérempli par défaut à l'ouverture de WhatsApp. */
 const WHATSAPP_GREETING = 'Bonjour VISILION, je souhaite des informations sur ';
 
-export function whatsappLink(message: string = WHATSAPP_GREETING): string {
-  return `https://wa.me/${site.contact.whatsapp}?text=${encodeURIComponent(message)}`;
+/** @param number Numéro international, chiffres seuls (2250151463051). */
+export function whatsappLink(number: string, message: string = WHATSAPP_GREETING): string {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+/** Lien d'appel à partir du numéro international (+225 01 51 46 30 51). */
+export function phoneHref(phoneIntl: string): string {
+  return `tel:${phoneIntl.replace(/[^+\d]/g, '')}`;
 }

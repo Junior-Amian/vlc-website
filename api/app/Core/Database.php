@@ -49,6 +49,10 @@ final class Database
                     // sa valeur sur certaines versions.
                     PDO::ATTR_EMULATE_PREPARES   => false,
                     PDO::ATTR_STRINGIFY_FETCHES  => false,
+                    // Les dates posées par MySQL (CURRENT_TIMESTAMP) suivent
+                    // sinon le fuseau du serveur de l'hébergeur. UTC est
+                    // l'heure d'Abidjan, celle de config/app.php.
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '+00:00'",
                 ]
             );
         } catch (PDOException $e) {

@@ -24,6 +24,14 @@
     # L'API PHP est servie à part : on ne touche pas à ses URL.
     RewriteRule ^api/ - [L]
 
+    # Panel d'administration : une seule page pré-rendue (admin.html) pour
+    # toutes ses adresses (/admin, /admin/medias, /admin/sections/hero…).
+    RewriteRule ^admin(/.*)?$ admin.html [L]
+
+    # Espace client : même principe (espace-client.html), y compris pour
+    # les liens d'invitation reçus par email.
+    RewriteRule ^espace-client(/.*)?$ espace-client.html [L]
+
     # Un fichier ou un dossier qui existe est servi directement.
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

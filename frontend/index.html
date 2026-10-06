@@ -23,6 +23,21 @@
       }, 4000);
     </script>
 
+    <!--
+      Contenu modifié dans le panel d'administration : demandé dès maintenant,
+      en parallèle du chargement de l'application, qui l'applique à son
+      démarrage (src/content/ContentProvider.tsx). Sans réponse (API
+      indisponible, aperçu GitHub Pages), le contenu compilé reste affiché.
+      Inutile sur le panel lui-même.
+    -->
+    <script>
+      if (location.pathname.indexOf('/admin') === -1 && window.fetch) {
+        window.__vlcContent = fetch('/api/content', { headers: { Accept: 'application/json' } })
+          .then(function (response) { return response.ok ? response.json() : null; })
+          .catch(function () { return null; });
+      }
+    </script>
+
     <!-- Polices : Poppins pour l'interface, Material Symbols pour les icones. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

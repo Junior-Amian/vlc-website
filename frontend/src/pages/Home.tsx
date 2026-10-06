@@ -11,6 +11,7 @@ import ContactForm from '../components/home/ContactForm';
 import ContactDetails from '../components/home/ContactDetails';
 import Section from '../components/ui/Section';
 import { site } from '../data/site';
+import { useContent } from '../content/ContentProvider';
 
 /**
  * Page unique du site.
@@ -22,20 +23,22 @@ import { site } from '../data/site';
  * dans styles/index.css.
  */
 export default function Home() {
+  const { company } = useContent();
+
   return (
     <>
       <Seo
         title={`${site.name} | Assistanat visa à Abidjan`}
-        description={site.description}
+        description={company.description}
         path="/"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'ProfessionalService',
           name: site.name,
-          slogan: site.slogan,
-          description: site.description,
-          telephone: site.contact.phoneIntl,
-          email: site.contact.email,
+          slogan: company.slogan,
+          description: company.description,
+          telephone: company.phoneIntl,
+          email: company.email,
           areaServed: "Côte d'Ivoire",
           address: {
             '@type': 'PostalAddress',

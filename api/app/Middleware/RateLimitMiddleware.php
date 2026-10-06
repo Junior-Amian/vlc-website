@@ -14,11 +14,16 @@ use Closure;
  *
  * Aucun Redis ni Memcached n'est disponible sur un mutualisé : on utilise
  * un fichier par IP dans storage/cache/ratelimit.
+ *
+ * Les seuils conviennent au formulaire de contact et à la connexion. Une
+ * route aux besoins différents déclare une sous-classe qui redéfinit
+ * MAX_ATTEMPTS (voir TrackRateLimitMiddleware) : le routeur instancie les
+ * middlewares par leur nom de classe, sans paramètre.
  */
-final class RateLimitMiddleware implements Middleware
+class RateLimitMiddleware implements Middleware
 {
-    private const MAX_ATTEMPTS = 5;
-    private const WINDOW_SECONDS = 600;
+    protected const MAX_ATTEMPTS = 5;
+    protected const WINDOW_SECONDS = 600;
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -49,13 +54,13 @@ final class RateLimitMiddleware implements Middleware
             if (is_array($decoded)) {
                 $timestamps = array_filter(
                     $decoded,
-                    static fn ($ts): bool => is_int($ts) && ($ts > $now - self::WINDOW_SECONDS)
+                    static fn ($ts): bool => is_int($ts) && ($ts > $now - static::WINDOW_SECONDS)
                 );
             }
         }
 
-        if (count($timestamps) >= self::MAX_ATTEMPTS) {
-            $retryAfter = (int) min($timestamps) + self::WINDOW_SECONDS - $now;
+        if (count($timestamps) >= static::MAX_ATTEMPTS) {
+            $retryAfter = (int) min($timestamps) + static::WINDOW_SECONDS - $now;
 
             return Response::error(
                 'Trop de demandes envoyées. Merci de réessayer dans quelques minutes.',
@@ -81,7 +86,7 @@ final class RateLimitMiddleware implements Middleware
             return;
         }
 
-        $cutoff = time() - self::WINDOW_SECONDS;
+        $cutoff = time() - static::WINDOW_SECONDS;
 
         foreach (glob($directory . '/*.json') ?: [] as $file) {
             if (@filemtime($file) < $cutoff) {

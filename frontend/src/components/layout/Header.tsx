@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../ui/Icon';
 import { asset } from '../../lib/asset';
-import { site, whatsappLink } from '../../data/site';
+import { phoneHref, site, whatsappLink } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
+import { useNav } from '../../content/useNav';
 
 /**
  * Suit la section visible pour mettre en évidence le lien du menu
@@ -39,6 +41,8 @@ function useActiveSection(ids: string[]): string | null {
 const SECTION_IDS = site.nav.map((item) => item.href.slice(1));
 
 export default function Header() {
+  const { company } = useContent();
+  const nav = useNav();
   const [isMenuOpen, setMenuOpen] = useState(false);
   const activeSection = useActiveSection(SECTION_IDS);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -85,7 +89,7 @@ export default function Header() {
         </a>
 
         <nav aria-label="Navigation principale" className="hidden items-center gap-1 lg:flex">
-          {site.nav.map((item) => {
+          {nav.map((item) => {
             const isActive = activeSection === item.href.slice(1);
 
             return (
@@ -112,11 +116,11 @@ export default function Header() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <a
-            href={site.contact.phoneHref}
+            href={phoneHref(company.phoneIntl)}
             className="hidden items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-secondary xl:inline-flex"
           >
             <Icon name="call" size={18} className="text-secondary" />
-            {site.contact.phoneDisplay}
+            {company.phoneDisplay}
           </a>
 
           {/*
@@ -180,7 +184,7 @@ export default function Header() {
           className="animate-sheet-in fixed inset-x-0 bottom-0 top-[72px] z-[45] flex flex-col overflow-y-auto overscroll-contain bg-white px-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4 sm:top-20 sm:px-8 lg:hidden short:top-14"
         >
           <nav aria-label="Navigation mobile" className="flex flex-col">
-            {site.nav.map((item) => {
+            {nav.map((item) => {
               const isActive = activeSection === item.href.slice(1);
 
               return (
@@ -223,14 +227,14 @@ export default function Header() {
 
             <div className="grid grid-cols-2 gap-3">
               <a
-                href={site.contact.phoneHref}
+                href={phoneHref(company.phoneIntl)}
                 className="flex items-center justify-center gap-2 rounded-xl border border-surface-container-high py-3.5 text-sm font-semibold text-primary"
               >
                 <Icon name="call" size={20} className="text-secondary" />
                 Appeler
               </a>
               <a
-                href={whatsappLink()}
+                href={whatsappLink(company.whatsapp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-xl border border-surface-container-high py-3.5 text-sm font-semibold text-primary"

@@ -1,0 +1,271 @@
+{
+  "hero": {
+    "title": "Ensemble, nous vous ouvrons le monde.",
+    "text": "Derrière chaque demande de visa, il y a un rêve : étudier, travailler, bâtir une nouvelle vie ailleurs. Nous portons le vôtre avec rigueur et bienveillance.",
+    "image": null
+  },
+  "departures": {
+    "label": "Départs d'Abidjan",
+    "airports": [
+      {
+        "code": "YUL",
+        "city": "Montréal"
+      },
+      {
+        "code": "YYZ",
+        "city": "Toronto"
+      },
+      {
+        "code": "CDG",
+        "city": "Paris"
+      },
+      {
+        "code": "LYS",
+        "city": "Lyon"
+      },
+      {
+        "code": "BRU",
+        "city": "Bruxelles"
+      },
+      {
+        "code": "FRA",
+        "city": "Francfort"
+      },
+      {
+        "code": "FCO",
+        "city": "Rome"
+      },
+      {
+        "code": "MAD",
+        "city": "Madrid"
+      },
+      {
+        "code": "IST",
+        "city": "Istanbul"
+      },
+      {
+        "code": "CAN",
+        "city": "Canton"
+      }
+    ]
+  },
+  "about": {
+    "titleLead": "Nous sommes",
+    "names": "Marc-Peniel et Marie-Paule.",
+    "lead": "Un couple uni par une même passion : ouvrir les portes du monde à ceux qui rêvent d'ailleurs.",
+    "paragraphs": [
+      "Notre complémentarité fait notre force. Chacun apporte son regard, son expertise et sa rigueur, et c'est cette union qui nous permet d'accompagner chaque client avec précision et humanité, dossier après dossier.",
+      "Ensemble, nous avons fait le choix de transformer notre engagement en une mission : celle de guider chaque personne, chaque famille, chaque projet vers une nouvelle vie à l'étranger : visa étudiant, résidence permanente, visa visiteur, d'affaires ou sportif.",
+      "Ce qui nous anime va au-delà du professionnel. C'est la conviction profonde que derrière chaque dossier se cache un rêve, et que ce rêve mérite d'être porté avec sérieux, écoute et bienveillance."
+    ],
+    "quote": "Aujourd'hui, c'est ensemble, en couple, que nous continuons de faire voyager les autres.",
+    "values": [
+      {
+        "icon": "favorite",
+        "title": "Écoute & bienveillance",
+        "text": "Votre situation comprise en profondeur, sans préjugé."
+      },
+      {
+        "icon": "gavel",
+        "title": "Rigueur",
+        "text": "Chaque dossier conforme aux exigences consulaires."
+      },
+      {
+        "icon": "flight_land",
+        "title": "Suivi jusqu'à l'arrivée",
+        "text": "Présents du dépôt du dossier jusqu'à votre installation."
+      }
+    ],
+    "portrait": null
+  },
+  "services": {
+    "title": "Six procédures, un même accompagnement.",
+    "intro": "Quel que soit votre projet, nous montons votre dossier avec rigueur et vous préparons à chaque étape, jusqu'à la réponse du consulat.",
+    "items": [
+      {
+        "title": "Visa étudiant",
+        "slug": "visa-etudiant",
+        "icon": "school",
+        "color": "blue",
+        "tagline": "Du choix de l'école jusqu'à l'entretien, nous vous suivons de A à Z.",
+        "description": "Vous rêvez d'étudier à l'étranger ? Nous vous accompagnons de A à Z : choix de l'établissement, constitution du dossier, lettre de motivation et préparation à l'entretien. Notre expertise maximise vos chances d'obtenir votre visa et de démarrer votre parcours académique sereinement.",
+        "destinations": [
+          "Canada",
+          "Europe"
+        ]
+      },
+      {
+        "title": "Résidence permanente",
+        "slug": "residence-permanente",
+        "icon": "home_work",
+        "color": "green",
+        "tagline": "Le bon programme d'immigration, et un suivi jusqu'à votre statut.",
+        "description": "Vous souhaitez vous installer durablement dans un nouveau pays ? Nous évaluons votre profil, identifions le programme le plus adapté à votre situation et vous guidons à chaque étape de la procédure d'immigration jusqu'à l'obtention de votre statut de résident permanent.",
+        "destinations": [
+          "Canada"
+        ]
+      },
+      {
+        "title": "Contrat de travail au Canada",
+        "slug": "contrat-travail-canada",
+        "icon": "work",
+        "color": "red",
+        "tagline": "Ouvert en ce moment aux métiers de la santé et de l'éducation préscolaire.",
+        "description": "Vous exercez dans la santé ou dans l'éducation préscolaire ? Ces deux secteurs recrutent au Canada. Nous évaluons votre profil et vos diplômes, constituons votre dossier et vous accompagnons jusqu'au permis de travail, pour une résidence temporaire au Canada.",
+        "destinations": [
+          "Canada"
+        ]
+      },
+      {
+        "title": "Visa visiteur",
+        "slug": "visa-visiteur",
+        "icon": "luggage",
+        "color": "yellow",
+        "tagline": "Tourisme, famille ou événement : un dossier traité sans complications.",
+        "description": "Tourisme, visite familiale ou événement particulier ? Nous préparons votre dossier avec rigueur pour vous garantir un traitement rapide et sans complications, et vous conseillons sur les justificatifs essentiels pour convaincre les autorités consulaires.",
+        "destinations": [
+          "Espace Schengen",
+          "Canada",
+          "Partout dans le monde"
+        ]
+      },
+      {
+        "title": "Visa d'affaires",
+        "slug": "visa-affaires",
+        "icon": "business_center",
+        "color": "red",
+        "tagline": "Rencontres, salons, missions : un dossier à la hauteur de vos enjeux.",
+        "description": "Déplacements professionnels, rencontres commerciales ou participation à un salon ? Nous facilitons vos démarches pour un visa d'affaires, en assurant un montage de dossier solide qui répond aux exigences spécifiques du monde professionnel.",
+        "destinations": [
+          "Turquie",
+          "Chine"
+        ]
+      },
+      {
+        "title": "Visa sport",
+        "slug": "visa-sport",
+        "icon": "sports_soccer",
+        "color": "blue",
+        "tagline": "Compétitions et stages : un suivi adapté aux délais serrés.",
+        "description": "Athlète, entraîneur ou membre d'une délégation sportive ? Nous vous accompagnons dans l'obtention de votre visa pour compétitions, stages ou événements sportifs internationaux, avec un suivi adapté aux délais souvent serrés de ce type de déplacement.",
+        "destinations": []
+      }
+    ]
+  },
+  "college": {
+    "title": "Étudier au Québec avec le Collège Universel.",
+    "intro": "VISILION est référent du Collège Universel, à Gatineau. Votre admission se prépare depuis Abidjan, avec des interlocuteurs qui connaissent le collège, ses critères et ses délais.",
+    "address": "228 bd Saint-Joseph, Gatineau (Québec)",
+    "url": "https://www.collegeuniversel.ca",
+    "urlLabel": "collegeuniversel.ca",
+    "stampValue": "3",
+    "stampUnit": "jours ouvrables",
+    "captionStrong": "Votre lettre d'acceptation sous 3 jours ouvrables",
+    "captionText": "dès que votre profil répond aux critères du collège et que les frais de demande sont réglés.",
+    "steps": [
+      {
+        "title": "Dossier d'admission",
+        "delay": "",
+        "text": "Nous vérifions que votre profil répond aux critères d'admission du collège et du permis d'études, puis nous transmettons votre dossier directement au collège.",
+        "issuer": "Préparé par VISILION"
+      },
+      {
+        "title": "Lettre d'acceptation",
+        "delay": "Sous 3 jours ouvrables",
+        "text": "Le collège vous la délivre dès que votre profil répond aux critères et que les frais de demande (non remboursables) sont réglés.",
+        "issuer": "Délivrée par le Collège Universel"
+      },
+      {
+        "title": "Certificat d'acceptation du Québec (CAQ)",
+        "delay": "",
+        "text": "Obligatoire pour étudier au Québec, il se demande avec votre lettre d'acceptation. Nous montons la demande avec vous.",
+        "issuer": "Délivré par le gouvernement du Québec"
+      },
+      {
+        "title": "Permis d'études",
+        "delay": "",
+        "text": "Le visa étudiant canadien, demandé une fois le CAQ obtenu. Nous suivons son traitement jusqu’à la décision.",
+        "issuer": "Délivré par Immigration Canada (IRCC)"
+      }
+    ],
+    "feesTitle": "Vos frais de scolarité sont versés directement au collège.",
+    "feesText": "Sur son compte bancaire, jamais entre nos mains. Et vous ne payez que les frais inscrits dans votre contrat avec le collège.",
+    "ctaLabel": "Préparer mon admission",
+    "disclaimer": "L'admission est décidée par le collège, le CAQ et le permis d'études par les autorités du Québec et du Canada. Notre rôle : un dossier complet, conforme et déposé dans les délais."
+  },
+  "testimonials": {
+    "title": "Ils ont franchi les frontières avec nous.",
+    "intro": "Chaque visa obtenu est un voyage qui commence. Voici quelques-uns de ces départs.",
+    "items": [
+      {
+        "name": "Kevin K.",
+        "service": "visa-visiteur",
+        "fromCode": "ABJ",
+        "fromCity": "Abidjan",
+        "toCode": "YUL",
+        "toCity": "Montréal",
+        "quote": "Après un refus avec une autre structure, ils ont repris mon dossier avec méthode. Visa obtenu pour rejoindre ma famille.",
+        "photo": null
+      },
+      {
+        "name": "Aïcha T.",
+        "service": "visa-etudiant",
+        "fromCode": "ABJ",
+        "fromCity": "Abidjan",
+        "toCode": "LYS",
+        "toCity": "Lyon",
+        "quote": "De l'inscription en master jusqu'au visa, ils m'ont préparée avec patience à chaque étape, entretien compris.",
+        "photo": null
+      },
+      {
+        "name": "Stéphane B.",
+        "service": "visa-affaires",
+        "fromCode": "ABJ",
+        "fromCity": "Abidjan",
+        "toCode": "IST",
+        "toCity": "Istanbul",
+        "quote": "Un salon professionnel à Istanbul et peu de temps devant moi : dossier solide, visa obtenu sans difficulté.",
+        "photo": null
+      }
+    ]
+  },
+  "portal": {
+    "badge": "Bientôt disponible",
+    "title": "Votre espace client, pour suivre votre dossier en ligne.",
+    "text": "Nous préparons un espace client qui vous permettra de consulter l'avancement de votre dossier en temps réel, de déposer vos justificatifs en toute sécurité et d'échanger directement avec votre conseiller dédié.",
+    "features": [
+      {
+        "icon": "notifications_active",
+        "text": "Alertes à chaque étape franchie"
+      },
+      {
+        "icon": "shield",
+        "text": "Dépôt de documents sécurisé"
+      },
+      {
+        "icon": "forum",
+        "text": "Messagerie directe avec votre conseiller"
+      },
+      {
+        "icon": "payments",
+        "text": "Suivi transparent des règlements"
+      }
+    ],
+    "aside": "En attendant, votre conseiller assure le suivi complet de votre dossier par téléphone et WhatsApp, comme aujourd'hui."
+  },
+  "contact": {
+    "eyebrow": "Parlons de votre projet",
+    "title": "Exprimez votre besoin, nous vous accompagnons.",
+    "text": "Dites-nous où vous souhaitez aller et ce qui vous retient : nous étudions votre situation et vous répondons avec franchise, sans engagement."
+  },
+  "company": {
+    "slogan": "Notre vision, votre satisfaction",
+    "description": "Cabinet d'assistanat visa à Abidjan. Études, tourisme, affaires, sport, travail ou résidence permanente : nous préparons votre dossier de A à Z, quelle que soit votre destination.",
+    "phoneDisplay": "01 51 46 30 51",
+    "phoneIntl": "+225 01 51 46 30 51",
+    "whatsapp": "2250151463051",
+    "email": "contact@visilioncorporate.com",
+    "city": "Abidjan, Côte d'Ivoire",
+    "footerText": "Marc-Peniel et Marie-Paule vous accompagnent depuis Abidjan dans toutes vos démarches de visa."
+  }
+}

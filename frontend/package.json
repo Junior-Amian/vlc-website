@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite-react-ssg build",
     "build:spa": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "content:pull": "node scripts/pull-content.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

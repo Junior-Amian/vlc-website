@@ -1,0 +1,37 @@
+# ---------------------------------------------------------------------------
+# Images envoyées depuis le panel d'administration.
+#
+# Rien ne doit s'exécuter ici : même si un fichier piégé franchissait les
+# contrôles de MediaController, le serveur le servirait comme du texte au
+# lieu de l'exécuter.
+# ---------------------------------------------------------------------------
+
+Options -Indexes -ExecCGI
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pl .py .cgi .sh
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+
+# Seules les images sont servies.
+<FilesMatch "^(?!.*\.(webp|jpe?g|png)$).*$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Le nom d'un fichier ne change jamais de contenu (nom aléatoire à l'envoi,
+# jamais réutilisé) : on peut le garder un an en cache.
+<IfModule mod_headers.c>
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

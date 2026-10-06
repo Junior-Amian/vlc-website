@@ -4,14 +4,28 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import MobileActionBar from './components/layout/MobileActionBar';
 import { useScrollReveal } from './lib/useScrollReveal';
+import { useAnalytics } from './lib/analytics';
+import { ContentProvider, useContentRevision } from './content/ContentProvider';
 
 /**
  * Coquille commune à toutes les pages publiques.
  */
 export default function Layout() {
-  const { pathname, hash } = useLocation();
+  return (
+    <ContentProvider>
+      <Shell />
+    </ContentProvider>
+  );
+}
 
-  useScrollReveal(pathname);
+function Shell() {
+  const { pathname, hash } = useLocation();
+  const contentRevision = useContentRevision();
+
+  // Relancée aussi à l'arrivée du contenu à jour : une carte ajoutée depuis
+  // le panel est un nouvel élément .reveal, qui resterait sinon invisible.
+  useScrollReveal(`${pathname}#${contentRevision}`);
+  useAnalytics(pathname);
 
   // Sans cela, React Router conserve la position de défilement d'une page à
   // l'autre et le visiteur arrive au milieu de la page suivante.

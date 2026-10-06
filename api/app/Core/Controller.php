@@ -27,4 +27,15 @@ abstract class Controller
 
         return $validator->validated();
     }
+
+    /**
+     * L'identifiant {id} de l'adresse, s'il a la forme d'un UUID v4 ; une
+     * chaîne vide sinon, que find() ne trouve jamais.
+     */
+    protected function routeId(Request $request, string $name = 'id'): string
+    {
+        $id = (string) $request->param($name, '');
+
+        return Uuid::isValid($id) ? $id : '';
+    }
 }

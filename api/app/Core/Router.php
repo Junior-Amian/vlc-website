@@ -42,7 +42,10 @@ final class Router
         $previousPrefix = $this->groupPrefix;
         $previousMiddleware = $this->groupMiddleware;
 
-        $this->groupPrefix .= '/' . trim($prefix, '/');
+        // Un préfixe vide sert à regrouper des routes sous des middlewares
+        // communs : il ne doit pas ajouter de « / » au chemin.
+        $prefix = trim($prefix, '/');
+        $this->groupPrefix .= $prefix === '' ? '' : '/' . $prefix;
         $this->groupMiddleware = [...$this->groupMiddleware, ...$middleware];
 
         $callback($this);

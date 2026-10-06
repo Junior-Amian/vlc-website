@@ -1,7 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import Icon from '../ui/Icon';
 import { ApiError, sendContactRequest, type ContactPayload } from '../../lib/api';
+import { trackAction } from '../../lib/analytics';
 import { whatsappLink } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
 
 type Status = 'idle' | 'sending' | 'sent';
 type FieldErrors = Partial<Record<keyof ContactPayload, string>>;
@@ -51,6 +53,7 @@ function readPayload(form: HTMLFormElement): ContactPayload {
     phone: text('phone'),
     message: text('message'),
     consent: data.get('consent') === 'on',
+    website: text('website'),
   };
 }
 
@@ -60,9 +63,9 @@ function readPayload(form: HTMLFormElement): ContactPayload {
   compris). 14 px seulement avec une souris ou un pavé tactile.
 */
 function inputClass(hasError: boolean): string {
-  return `w-full rounded-xl border bg-surface px-4 text-base text-on-surface placeholder:text-on-surface-variant/70 transition-colors focus:bg-white focus:outline-none focus:ring-2 pointer-fine:text-sm ${
+  return `w-full rounded-xl border bg-surface px-4 text-base text-on-surface placeholder:text-on-surface-variant/85 transition-colors focus:bg-white focus:outline-none focus:ring-2 pointer-fine:text-sm ${
     hasError
-      ? 'border-red-600 focus:ring-red-600/30'
+      ? 'border-brand-red-ink focus:ring-brand-red/30'
       : 'border-surface-container-high hover:border-on-surface-variant/40 focus:border-secondary focus:ring-secondary/25'
   }`;
 }
@@ -86,7 +89,7 @@ function Field({ id, label, error, className = '', children }: FieldProps) {
       </label>
       {children(error ? errorId : undefined)}
       {error && (
-        <p id={errorId} className="flex items-start gap-1.5 text-sm font-medium text-red-700">
+        <p id={errorId} className="flex items-start gap-1.5 text-sm font-medium text-brand-red-ink">
           <Icon name="error" size={16} className="mt-0.5 shrink-0" />
           {error}
         </p>
@@ -103,6 +106,7 @@ function Field({ id, label, error, className = '', children }: FieldProps) {
  * court est nettement mieux rempli qu'un formulaire exhaustif.
  */
 export default function ContactForm() {
+  const { company } = useContent();
   const [status, setStatus] = useState<Status>('idle');
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -132,6 +136,7 @@ export default function ContactForm() {
 
     try {
       await sendContactRequest(payload);
+      trackAction('contact_form');
 
       form.reset();
       setMessageLength(0);
@@ -197,7 +202,18 @@ export default function ContactForm() {
         </p>
       </div>
 
-      <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+      <form className="relative flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+        {/*
+          Champ piège : hors écran (et non display:none, que les robots
+          repèrent), absent du parcours au clavier et caché aux lecteurs
+          d'écran. Un humain le laisse vide ; un robot qui remplit tout est
+          classé indésirable par l'API, sans le savoir.
+        */}
+        <div aria-hidden="true" className="absolute -left-[10000px] top-0 h-px w-px overflow-hidden">
+          <label htmlFor="website">Site web</label>
+          <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
+        </div>
+
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Field id="full_name" label="Nom et prénom" error={fieldErrors.full_name}>
             {(describedBy) => (
@@ -288,7 +304,7 @@ export default function ContactForm() {
             </label>
           </div>
           {fieldErrors.consent && (
-            <p id="consent-error" className="flex items-start gap-1.5 text-sm font-medium text-red-700">
+            <p id="consent-error" className="flex items-start gap-1.5 text-sm font-medium text-brand-red-ink">
               <Icon name="error" size={16} className="mt-0.5 shrink-0" />
               {fieldErrors.consent}
             </p>
@@ -296,15 +312,15 @@ export default function ContactForm() {
         </div>
 
         {globalError && (
-          <div role="alert" className="flex flex-col gap-3 rounded-2xl bg-red-50 p-4">
-            <p className="flex items-start gap-2 text-sm font-medium text-red-800">
+          <div role="alert" className="flex flex-col gap-3 rounded-2xl bg-brand-red-soft p-4">
+            <p className="flex items-start gap-2 text-sm font-medium text-brand-red-ink">
               <Icon name="error" size={18} className="mt-0.5 shrink-0" />
               {globalError}
             </p>
 
             {whatsappDraft && (
               <a
-                href={whatsappLink(whatsappDraft)}
+                href={whatsappLink(company.whatsapp, whatsappDraft)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex w-fit items-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"

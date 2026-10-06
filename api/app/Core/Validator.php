@@ -8,7 +8,7 @@ namespace App\Core;
  * Validateur par règles, façon « required|email|max:180 ».
  *
  * Règles disponibles : required, string, email, numeric, integer, boolean,
- * min:n, max:n, in:a,b,c, regex:#...#, accepted, date, confirmed.
+ * min:n, max:n, in:a,b,c, regex:#...#, accepted, date, confirmed, uuid.
  */
 final class Validator
 {
@@ -56,8 +56,14 @@ final class Validator
                 continue;
             }
 
+            // min/max portent sur la valeur pour un champ numérique, sur la
+            // longueur sinon. Sans cette distinction, un téléphone saisi sans
+            // espaces (« 0707070707 ») était comparé comme un nombre et
+            // dépassait « max:30 ».
+            $isNumber = in_array('numeric', $rules, true) || in_array('integer', $rules, true);
+
             foreach ($rules as $rule) {
-                $this->apply($field, $value, $rule);
+                $this->apply($field, $value, $rule, $isNumber);
             }
 
             if (!isset($this->errors[$field])) {
@@ -66,7 +72,7 @@ final class Validator
         }
     }
 
-    private function apply(string $field, mixed $value, string $rule): void
+    private function apply(string $field, mixed $value, string $rule, bool $isNumber): void
     {
         [$name, $parameter] = array_pad(explode(':', $rule, 2), 2, null);
 
@@ -113,14 +119,14 @@ final class Validator
 
             case 'min':
                 $min = (int) $parameter;
-                if (is_numeric($value) ? ((float) $value < $min) : (mb_strlen((string) $value) < $min)) {
+                if ($isNumber ? ((float) $value < $min) : (mb_strlen((string) $value) < $min)) {
                     $this->addError($field, "Le champ %s doit contenir au moins {$min} caractères.");
                 }
                 break;
 
             case 'max':
                 $max = (int) $parameter;
-                if (is_numeric($value) ? ((float) $value > $max) : (mb_strlen((string) $value) > $max)) {
+                if ($isNumber ? ((float) $value > $max) : (mb_strlen((string) $value) > $max)) {
                     $this->addError($field, "Le champ %s ne doit pas dépasser {$max} caractères.");
                 }
                 break;
@@ -141,6 +147,12 @@ final class Validator
             case 'date':
                 if (strtotime((string) $value) === false) {
                     $this->addError($field, 'Le champ %s doit être une date valide.');
+                }
+                break;
+
+            case 'uuid':
+                if (!Uuid::isValid($value)) {
+                    $this->addError($field, 'Le champ %s ne désigne aucun élément connu.');
                 }
                 break;
 

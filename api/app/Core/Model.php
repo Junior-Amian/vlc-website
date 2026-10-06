@@ -12,6 +12,9 @@ use PDO;
  * Volontairement simple — il ne s'agit pas d'un ORM. Les noms de colonnes
  * utilisés dans insert()/update() sont filtrés par $fillable afin qu'une
  * charge utile JSON ne puisse jamais écrire une colonne non prévue.
+ *
+ * Les tables ont pour clé un UUID v4 (colonne `id`, voir Uuid), attribué ici
+ * à la création, jamais par le client.
  */
 abstract class Model
 {
@@ -27,14 +30,15 @@ abstract class Model
         return Database::connection();
     }
 
-    /** @param array<string, mixed> $attributes */
-    public function create(array $attributes): int
+    /**
+     * @param array<string, mixed> $attributes
+     * @return string L'identifiant (UUID v4) de la ligne créée.
+     */
+    public function create(array $attributes): string
     {
-        $attributes = $this->filterFillable($attributes);
-
-        if ($attributes === []) {
-            return 0;
-        }
+        // L'identifiant ne passe jamais par $fillable : il est tiré ici.
+        $id = Uuid::v4();
+        $attributes = [$this->primaryKey => $id, ...$this->filterFillable($attributes)];
 
         $columns = array_keys($attributes);
         $placeholders = array_map(static fn (string $c): string => ':' . $c, $columns);
@@ -49,11 +53,11 @@ abstract class Model
         $statement = $this->db()->prepare($sql);
         $statement->execute($attributes);
 
-        return (int) $this->db()->lastInsertId();
+        return $id;
     }
 
     /** @param array<string, mixed> $attributes */
-    public function update(int $id, array $attributes): bool
+    public function update(string $id, array $attributes): bool
     {
         $attributes = $this->filterFillable($attributes);
 
@@ -78,9 +82,18 @@ abstract class Model
         return $statement->execute([...$attributes, '__id' => $id]);
     }
 
-    /** @return array<string, mixed>|null */
-    public function find(int $id): ?array
+    /**
+     * Une ligne par son identifiant. Un identifiant mal formé (adresse
+     * bricolée) ne va pas jusqu'à la base : il ne peut correspondre à rien.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function find(string $id): ?array
     {
+        if (!Uuid::isValid($id)) {
+            return null;
+        }
+
         $statement = $this->db()->prepare(
             sprintf('SELECT * FROM `%s` WHERE `%s` = :id LIMIT 1', $this->table, $this->primaryKey)
         );
@@ -106,16 +119,23 @@ abstract class Model
         return $row === false ? null : $row;
     }
 
-    /** @return array<int, array<string, mixed>> */
-    public function all(string $orderBy = 'id', string $direction = 'DESC', int $limit = 100, int $offset = 0): array
+    /**
+     * Les UUID ne suivent pas l'ordre de création : on trie par date, et
+     * l'identifiant ne sert qu'à départager deux lignes de la même seconde.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function all(string $orderBy = 'created_at', string $direction = 'DESC', int $limit = 100, int $offset = 0): array
     {
         $this->guardColumn($orderBy);
         $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
 
         $sql = sprintf(
-            'SELECT * FROM `%s` ORDER BY `%s` %s LIMIT :limit OFFSET :offset',
+            'SELECT * FROM `%s` ORDER BY `%s` %s, `%s` %s LIMIT :limit OFFSET :offset',
             $this->table,
             $orderBy,
+            $direction,
+            $this->primaryKey,
             $direction
         );
 
@@ -127,7 +147,7 @@ abstract class Model
         return $statement->fetchAll();
     }
 
-    public function delete(int $id): bool
+    public function delete(string $id): bool
     {
         $statement = $this->db()->prepare(
             sprintf('DELETE FROM `%s` WHERE `%s` = :id', $this->table, $this->primaryKey)

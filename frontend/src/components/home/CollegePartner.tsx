@@ -1,44 +1,16 @@
 import type { CSSProperties } from 'react';
 import Icon from '../ui/Icon';
 import Section from '../ui/Section';
-
-const COLLEGE = {
-  address: '228 bd Saint-Joseph, Gatineau (Québec)',
-  url: 'https://www.collegeuniversel.ca',
-  urlLabel: 'collegeuniversel.ca',
-};
+import { useContent } from '../../content/ContentProvider';
 
 /*
-  Les étapes et leurs délais viennent du contrat de référent
+  Les étapes et leurs délais viennent à l'origine du contrat de référent
   (docs/Contrat_Referent_CU.pdf) : lettre d'acceptation sous 3 jours
   ouvrables, frais de demande non remboursables, commission versée une fois
   le CAQ et le permis d'études obtenus — d'où ces deux documents comme
   étapes. `issuer` nomme qui délivre le document : c'est l'information
-  que les familles demandent le plus souvent.
+  que les familles demandent le plus souvent. Tout se modifie dans le panel.
 */
-const STEPS = [
-  {
-    title: "Dossier d'admission",
-    text: "Nous vérifions que votre profil répond aux critères d'admission du collège et du permis d'études, puis nous transmettons votre dossier directement au collège.",
-    issuer: 'Préparé par VISILION',
-  },
-  {
-    title: "Lettre d'acceptation",
-    delay: 'Sous 3 jours ouvrables',
-    text: 'Le collège vous la délivre dès que votre profil répond aux critères et que les frais de demande (non remboursables) sont réglés.',
-    issuer: 'Délivrée par le Collège Universel',
-  },
-  {
-    title: "Certificat d'acceptation du Québec (CAQ)",
-    text: "Obligatoire pour étudier au Québec, il se demande avec votre lettre d'acceptation. Nous montons la demande avec vous.",
-    issuer: 'Délivré par le gouvernement du Québec',
-  },
-  {
-    title: "Permis d'études",
-    text: 'Le visa étudiant canadien, demandé une fois le CAQ obtenu. Nous suivons son traitement jusqu’à la décision.',
-    issuer: 'Délivré par Immigration Canada (IRCC)',
-  },
-];
 
 /** Rayon du texte circulaire du tampon, dans le repère 200 × 200 du SVG. */
 const STAMP_TEXT_RADIUS = 79;
@@ -56,7 +28,7 @@ const STAMP_TEXT_RADIUS = 79;
  * Il « frappe » à l'arrivée de la section (voir .stamp dans index.css) :
  * le seul mouvement propre à cette section.
  */
-function AcceptanceStamp() {
+function AcceptanceStamp({ value, unit }: { value: string; unit: string }) {
   const r = STAMP_TEXT_RADIUS;
 
   return (
@@ -85,10 +57,10 @@ function AcceptanceStamp() {
 
       <p className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[5.5rem] font-extrabold leading-[0.85] tracking-tight text-white sm:text-8xl lg:text-[6.5rem]">
-          3
+          {value}
         </span>
         <span className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-brand-yellow sm:text-sm md:text-xs lg:text-sm">
-          jours ouvrables
+          {unit}
         </span>
       </p>
     </div>
@@ -113,6 +85,8 @@ function AcceptanceStamp() {
  * du titre une fois l'autorisation écrite obtenue.
  */
 export default function CollegePartner() {
+  const { college } = useContent();
+
   return (
     <Section id="college-universel" className="relative overflow-hidden bg-primary text-white">
       <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-brand-blue" />
@@ -120,42 +94,36 @@ export default function CollegePartner() {
       {/* Côte à côte dès la tablette : empilé, le tampon repoussait le parcours d'un écran. */}
       <div className="grid grid-cols-1 items-center gap-14 md:grid-cols-12 md:gap-10 lg:gap-16">
         <div className="reveal flex flex-col items-center gap-6 text-center md:col-span-7 md:items-start md:text-left">
+          {/* Les deux derniers mots (« Collège Universel. ») ne se séparent jamais. */}
           <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Étudier au Québec avec le <span className="whitespace-nowrap">Collège Universel.</span>
+            {college.title.replace(/ (\S+)$/, ' $1')}
           </h2>
 
-          <p className="max-w-[40rem] text-lg leading-relaxed text-slate-200">
-            VISILION est référent du Collège Universel, à Gatineau. Votre admission se prépare
-            depuis Abidjan, avec des interlocuteurs qui connaissent le collège, ses critères et
-            ses délais.
-          </p>
+          <p className="max-w-[40rem] text-lg leading-relaxed text-on-primary-soft">{college.intro}</p>
 
-          <div className="flex flex-col items-center gap-2 text-sm text-slate-300 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6 md:justify-start">
+          <div className="flex flex-col items-center gap-2 text-sm text-on-primary-variant sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-6 md:justify-start">
             <p className="flex items-center gap-2.5">
               <Icon name="location_on" size={18} className="shrink-0 text-brand-yellow" />
-              {COLLEGE.address}
+              {college.address}
             </p>
             <a
-              href={COLLEGE.url}
+              href={college.url}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-11 w-fit items-center gap-2.5 font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-brand-yellow"
             >
               <Icon name="open_in_new" size={18} className="shrink-0 text-brand-yellow" />
-              {COLLEGE.urlLabel}
+              {college.urlLabel}
               <span className="sr-only"> (nouvel onglet)</span>
             </a>
           </div>
         </div>
 
         <figure className="flex flex-col items-center gap-6 md:col-span-5">
-          <AcceptanceStamp />
-          <figcaption className="max-w-xs text-center text-sm leading-relaxed text-slate-300">
-            <strong className="font-semibold text-white">
-              Votre lettre d'acceptation sous 3 jours ouvrables
-            </strong>{' '}
-            dès que votre profil répond aux critères du collège et que les frais de demande sont
-            réglés.
+          <AcceptanceStamp value={college.stampValue} unit={college.stampUnit} />
+          <figcaption className="max-w-xs text-center text-sm leading-relaxed text-on-primary-variant">
+            <strong className="font-semibold text-white">{college.captionStrong}</strong>{' '}
+            {college.captionText}
           </figcaption>
         </figure>
       </div>
@@ -169,13 +137,13 @@ export default function CollegePartner() {
         aria-label="Votre parcours jusqu'à la rentrée"
         className="mt-16 grid grid-cols-1 border-t border-white/10 pt-12 lg:mt-20 lg:grid-cols-4 lg:gap-8 lg:pt-14"
       >
-        {STEPS.map((step, index) => {
+        {college.steps.map((step, index) => {
           const isHighlight = Boolean(step.delay);
-          const isLast = index === STEPS.length - 1;
+          const isLast = index === college.steps.length - 1;
 
           return (
             <li
-              key={step.title}
+              key={`${step.title}-${index}`}
               className="reveal relative flex gap-5 pb-10 last:pb-0 lg:flex-col lg:pb-0"
               style={{ '--i': index } as CSSProperties}
             >
@@ -207,7 +175,7 @@ export default function CollegePartner() {
                   <p className="text-sm font-bold text-brand-yellow">{step.delay}</p>
                 )}
 
-                <p className="max-w-[60ch] text-base leading-relaxed text-slate-300 lg:text-[0.9375rem]">
+                <p className="max-w-[60ch] text-base leading-relaxed text-on-primary-variant lg:text-[0.9375rem]">
                   {step.text}
                 </p>
 
@@ -226,12 +194,9 @@ export default function CollegePartner() {
             <Icon name="account_balance" size={22} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <p className="text-base font-bold leading-snug text-white">
-              Vos frais de scolarité sont versés directement au collège.
-            </p>
-            <p className="max-w-[60ch] text-sm leading-relaxed text-slate-300">
-              Sur son compte bancaire, jamais entre nos mains. Et vous ne payez que les frais
-              inscrits dans votre contrat avec le collège.
+            <p className="text-base font-bold leading-snug text-white">{college.feesTitle}</p>
+            <p className="max-w-[60ch] text-sm leading-relaxed text-on-primary-variant">
+              {college.feesText}
             </p>
           </div>
         </div>
@@ -240,14 +205,13 @@ export default function CollegePartner() {
           href="#contact"
           className="inline-flex w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-secondary px-6 py-3.5 sm:w-fit text-sm font-semibold text-white shadow-lg shadow-black/30 transition-colors hover:bg-on-secondary-fixed active:scale-[0.98]"
         >
-          <span>Préparer mon admission</span>
+          <span>{college.ctaLabel}</span>
           <Icon name="arrow_forward" size={18} className="arrow-nudge" />
         </a>
       </div>
 
-      <p className="mx-auto mt-6 max-w-[70ch] text-center text-sm leading-relaxed text-slate-300 md:mx-0 md:text-left">
-        L'admission est décidée par le collège, le CAQ et le permis d'études par les autorités du
-        Québec et du Canada. Notre rôle : un dossier complet, conforme et déposé dans les délais.
+      <p className="mx-auto mt-6 max-w-[70ch] text-center text-sm leading-relaxed text-on-primary-variant md:mx-0 md:text-left">
+        {college.disclaimer}
       </p>
     </Section>
   );

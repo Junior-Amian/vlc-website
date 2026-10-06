@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Icon from '../ui/Icon';
-import { site, whatsappLink } from '../../data/site';
+import { phoneHref, whatsappLink } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
 
 /*
   Zones où la barre s'efface : la bannière (elle a ses propres boutons), les
@@ -24,6 +25,7 @@ const HIDE_ON = ['accueil', 'services', 'contact', 'pied-de-page'];
  * tabulation. La marge basse respecte l'encoche des iPhone (viewport-fit).
  */
 export default function MobileActionBar() {
+  const { company } = useContent();
   const [isVisible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -61,15 +63,15 @@ export default function MobileActionBar() {
     >
       <div className="mx-auto flex max-w-xl items-center gap-2 px-4 pt-3">
         <a
-          href={site.contact.phoneHref}
-          aria-label={`Appeler VISILION au ${site.contact.phoneDisplay}`}
+          href={phoneHref(company.phoneIntl)}
+          aria-label={`Appeler VISILION au ${company.phoneDisplay}`}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-surface-container-high text-secondary active:scale-95"
         >
           <Icon name="call" size={22} />
         </a>
 
         <a
-          href={whatsappLink()}
+          href={whatsappLink(company.whatsapp)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Écrire à VISILION sur WhatsApp"

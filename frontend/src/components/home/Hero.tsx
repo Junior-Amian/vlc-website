@@ -1,16 +1,25 @@
 import Icon from '../ui/Icon';
 import { asset } from '../../lib/asset';
-import { site } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
+import { imageProps } from '../../content/media';
+
+/*
+  Photo par défaut, tant qu'aucune n'est choisie dans le panel : Atikh Bana
+  (@tikh) sur Unsplash, licence Unsplash (usage commercial libre, sans
+  attribution obligatoire). Une voyageuse à Paris, et non un couple, pour ne
+  pas être confondue avec les fondateurs, présentés juste après.
+*/
+const DEFAULT_PHOTO = {
+  src: asset('/images/hero-paris-1920.webp'),
+  srcSet: `${asset('/images/hero-paris-960.webp')} 960w, ${asset('/images/hero-paris-1920.webp')} 1920w, ${asset('/images/hero-paris-2400.webp')} 2400w`,
+  width: 1920,
+  height: 1280,
+  alt: 'Voyageuse souriante devant la tour Eiffel, à Paris',
+};
 
 /*
   Bannière immersive, dans l'esprit de la maquette validée par le client
   (template/screen.png) : une photo de voyage sous un voile marine.
-
-  Photo : Atikh Bana (@tikh) sur Unsplash, licence Unsplash (usage commercial
-  libre, sans attribution obligatoire). Une voyageuse à Paris, et non un
-  couple, pour ne pas être confondue avec les fondateurs, présentés juste
-  après. À remplacer par une photo propre au client quand il en fournira une,
-  en gardant les trois largeurs de public/images/.
 
   Deux compositions :
   - grand écran : photo en plein cadre, voile de gauche (texte) à droite
@@ -19,17 +28,16 @@ import { site } from '../../data/site';
     dessous, pour que le titre ne passe jamais sur le visage.
 */
 export default function Hero() {
+  const { hero, company } = useContent();
+  const photo = hero.image ? imageProps(hero.image, 1920) : DEFAULT_PHOTO;
+
   return (
     <section id="accueil" className="relative isolate overflow-hidden bg-primary lg:flex lg:min-h-[min(100dvh,820px)] lg:items-center">
       <div className="relative h-[42vh] min-h-[260px] max-h-[440px] overflow-hidden sm:h-[50vh] sm:max-h-[520px] lg:absolute lg:inset-0 lg:-z-10 lg:h-auto lg:max-h-none">
         <img
-          src={asset('/images/hero-paris-1920.webp')}
-          srcSet={`${asset('/images/hero-paris-960.webp')} 960w, ${asset('/images/hero-paris-1920.webp')} 1920w, ${asset('/images/hero-paris-2400.webp')} 2400w`}
+          {...photo}
           sizes="100vw"
-          width={1920}
-          height={1280}
           fetchPriority="high"
-          alt="Voyageuse souriante devant la tour Eiffel, à Paris"
           className="hero-zoom h-full w-full object-cover object-[62%_30%]"
         />
 
@@ -46,15 +54,14 @@ export default function Hero() {
             className="animate-rise text-4xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl"
             style={{ animationDelay: '80ms' }}
           >
-            Ensemble, nous vous ouvrons le monde.
+            {hero.title}
           </h1>
 
           <p
-            className="animate-rise max-w-[34rem] text-base leading-relaxed text-slate-200 sm:text-lg"
+            className="animate-rise max-w-[34rem] text-base leading-relaxed text-on-primary-soft sm:text-lg"
             style={{ animationDelay: '160ms' }}
           >
-            Derrière chaque demande de visa, il y a un rêve : étudier, travailler, bâtir une nouvelle
-            vie ailleurs. Nous portons le vôtre avec rigueur et bienveillance.
+            {hero.text}
           </p>
 
           <div
@@ -84,7 +91,7 @@ export default function Hero() {
             style={{ animationDelay: '320ms' }}
           >
             <span aria-hidden="true" className="hidden h-0.5 w-12 rounded-full bg-secondary lg:block" />
-            « {site.slogan} »
+            « {company.slogan} »
           </p>
         </div>
       </div>

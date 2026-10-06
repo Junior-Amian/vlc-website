@@ -2,8 +2,9 @@ import type { CSSProperties } from 'react';
 import Icon from '../ui/Icon';
 import Section from '../ui/Section';
 import { brand } from '../ui/brand';
-import { testimonials, type Testimonial } from '../../data/testimonials';
-import { findService } from '../../data/services';
+import { useContent } from '../../content/ContentProvider';
+import { imageProps } from '../../content/media';
+import type { MediaImage, Service, Testimonial } from '../../content/types';
 
 /*
   Sur grand écran, les cartes sont posées « sur la table » : légère
@@ -14,10 +15,23 @@ import { findService } from '../../data/services';
 const TILT = ['lg:-rotate-2', 'lg:translate-y-10 lg:rotate-1', 'lg:translate-y-3 lg:-rotate-1'];
 
 /*
-  TODO photo : photo du client (carrée, au moins 200 × 200 px), avec son
-  accord écrit. Remplacer ce bloc par une <img loading="lazy"> ronde.
+  Photo du client (carrée), choisie dans le panel avec son accord écrit.
+  Décorative : le nom est écrit juste à côté. Sans photo, une pastille la
+  remplace.
 */
-function PassengerPhoto() {
+function PassengerPhoto({ photo }: { photo: MediaImage | null }) {
+  if (photo) {
+    return (
+      <img
+        {...imageProps(photo, 96)}
+        alt=""
+        sizes="44px"
+        loading="lazy"
+        className="h-11 w-11 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+
   return (
     <span
       aria-hidden="true"
@@ -32,7 +46,7 @@ function Airport({ code, city, align }: { code: string; city: string; align: 'le
   return (
     <span className={`flex flex-col ${align === 'right' ? 'items-end' : 'items-start'}`}>
       <span className="text-3xl font-extrabold leading-none tracking-tight text-white">{code}</span>
-      <span className="mt-1.5 text-xs text-slate-300">{city}</span>
+      <span className="mt-1.5 text-xs text-on-primary-variant">{city}</span>
     </span>
   );
 }
@@ -40,16 +54,19 @@ function Airport({ code, city, align }: { code: string; city: string; align: 'le
 /** Un témoignage présenté comme une carte d'embarquement Abidjan → destination. */
 function BoardingPass({
   testimonial,
+  service,
   tilt,
   index,
 }: {
   testimonial: Testimonial;
+  /** Absente si la prestation citée a été retirée ou masquée depuis. */
+  service: Service | undefined;
   tilt: string;
   index: number;
 }) {
-  const service = findService(testimonial.service);
   const colors = brand[service?.color ?? 'green'];
-  const { from, to } = testimonial;
+  const from = { code: testimonial.fromCode, city: testimonial.fromCity };
+  const to = { code: testimonial.toCode, city: testimonial.toCity };
 
   return (
     /*
@@ -68,7 +85,7 @@ function BoardingPass({
         <div className="relative bg-primary px-6 pb-7 pt-5">
           <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${colors.solid}`} />
 
-          <p className="mb-5 flex items-center justify-between text-xs text-slate-300">
+          <p className="mb-5 flex items-center justify-between text-xs text-on-primary-variant">
             <span className="font-semibold text-white">VISILION</span>
             <span>Carte d'embarquement</span>
           </p>
@@ -104,18 +121,20 @@ function BoardingPass({
 
           <figcaption className="flex items-center justify-between gap-3 border-t border-surface-container pt-5">
             <span className="flex min-w-0 items-center gap-3">
-              <PassengerPhoto />
+              <PassengerPhoto photo={testimonial.photo} />
               <span className="flex min-w-0 flex-col">
                 <span className="text-xs text-on-surface-variant">Passager</span>
                 <span className="truncate text-sm font-bold text-primary">{testimonial.name}</span>
               </span>
             </span>
 
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${colors.soft} ${colors.text}`}
-            >
-              {service?.title}
-            </span>
+            {service && (
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${colors.soft} ${colors.text}`}
+              >
+                {service.title}
+              </span>
+            )}
           </figcaption>
         </div>
       </figure>
@@ -126,17 +145,26 @@ function BoardingPass({
 /**
  * Témoignages présentés comme des cartes d'embarquement : chaque client est
  * un passager parti d'Abidjan vers sa destination. Le motif reprend le nom
- * et la couleur de la prestation concernée (voir data/services.ts).
+ * et la couleur de la prestation concernée.
+ *
+ * Sans témoignage publié, la section disparaît, lien du menu compris : un
+ * titre sans cartes ferait plus de tort que pas de section du tout.
  */
 export default function Testimonials() {
+  const { testimonials, services } = useContent();
+
+  if (testimonials.items.length === 0) {
+    return null;
+  }
+
   return (
     <Section id="temoignages" className="overflow-hidden bg-white">
       <div className="reveal mx-auto mb-12 max-w-3xl text-center lg:mb-16">
         <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl">
-          Ils ont franchi les frontières avec nous.
+          {testimonials.title}
         </h2>
         <p className="mt-4 text-base leading-relaxed text-on-surface-variant">
-          Chaque visa obtenu est un voyage qui commence. Voici quelques-uns de ces départs.
+          {testimonials.intro}
         </p>
       </div>
 
@@ -148,11 +176,22 @@ export default function Testimonials() {
         grille de trois. Les cartes apparaissent l'une après l'autre ; dans
         le carrousel, celles hors écran apparaissent quand on les fait glisser.
       */}
-      <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-6 pt-2 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-10 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
-        {testimonials.map((testimonial, index) => (
+      {/*
+        Sans élément focalisable dans les cartes, la zone défilante doit
+        l'être elle-même pour se faire défiler au clavier (flèches), comme
+        la galerie des prestations.
+      */}
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Témoignages de clients"
+        className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-6 pt-2 [scrollbar-width:none] sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-10 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        {testimonials.items.map((testimonial, index) => (
           <BoardingPass
-            key={testimonial.name}
+            key={`${testimonial.name}-${index}`}
             testimonial={testimonial}
+            service={services.items.find((service) => service.slug === testimonial.service)}
             tilt={TILT[index % TILT.length]}
             index={index}
           />

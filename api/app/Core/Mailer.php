@@ -83,8 +83,12 @@ final class Mailer
         return trim(str_replace(["\r", "\n", "%0a", "%0d"], '', $value));
     }
 
-    /** @param array<string, string> $rows */
-    public static function layout(string $title, string $intro, array $rows = []): string
+    /**
+     * @param array<string, string>                   $rows
+     * @param array{label: string, url: string}|null $action Bouton, suivi de l'adresse en clair
+     *                                                        pour les messageries qui masquent les boutons.
+     */
+    public static function layout(string $title, string $intro, array $rows = [], ?array $action = null, string $footnote = ''): string
     {
         $html = '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"></head>'
             . '<body style="margin:0;padding:24px;background:#f1f4fc;font-family:Arial,Helvetica,sans-serif;color:#111c2d;">'
@@ -107,6 +111,20 @@ final class Mailer
             }
 
             $html .= '</table>';
+        }
+
+        if ($action !== null) {
+            $url = htmlspecialchars($action['url'], ENT_QUOTES, 'UTF-8');
+
+            $html .= '<p style="margin:24px 0 8px;">'
+                . '<a href="' . $url . '" style="display:inline-block;background:#b35b00;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:14px 24px;border-radius:12px;">'
+                . htmlspecialchars($action['label'], ENT_QUOTES, 'UTF-8') . '</a></p>'
+                . '<p style="margin:0 0 16px;font-size:12px;line-height:18px;color:#4d5868;">Si le bouton ne s\'affiche pas, copiez cette adresse dans votre navigateur :<br>'
+                . '<span style="word-break:break-all;color:#00142f;">' . $url . '</span></p>';
+        }
+
+        if ($footnote !== '') {
+            $html .= '<p style="margin:16px 0 0;font-size:12px;line-height:18px;color:#4d5868;">' . nl2br(htmlspecialchars($footnote, ENT_QUOTES, 'UTF-8')) . '</p>';
         }
 
         return $html . '</div></div></body></html>';

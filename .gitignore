@@ -17,6 +17,14 @@ api/.env
 # Les dossiers sont recréés automatiquement par l'application.
 api/storage/logs/
 api/storage/cache/
+# Pièces déposées par les clients (passeports, relevés…) : jamais dans le dépôt.
+api/storage/documents/
+
+# Images envoyées depuis le panel d'administration : elles vivent sur le
+# serveur, avec la base qui les référence. Seul le .htaccess qui interdit
+# d'y exécuter du code est versionné.
+api/public/uploads/*
+!api/public/uploads/.htaccess
 
 # --- Écartés à la demande --------------------------------------------------
 # .claude/ : configuration et skills locaux, propres au poste.

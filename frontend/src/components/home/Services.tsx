@@ -3,7 +3,14 @@ import Icon from '../ui/Icon';
 import { Container } from '../ui/Section';
 import { brand } from '../ui/brand';
 import { useHorizontalPin } from '../../lib/useHorizontalPin';
-import { services, type Service } from '../../data/services';
+import { useContent } from '../../content/ContentProvider';
+import type { Service } from '../../content/types';
+
+/** Nombre écrit en toutes lettres dans la consigne de la galerie (« les six prestations »). */
+const NUMBER_WORDS = [
+  'zéro', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six',
+  'sept', 'huit', 'neuf', 'dix', 'onze', 'douze',
+];
 
 /**
  * Une prestation, sous forme de fiche.
@@ -77,7 +84,7 @@ function ServiceCard({
         </span>
 
         {/* Numérotation : elle situe dans la série sans peser. */}
-        <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-on-surface-variant/50">
+        <span className="text-xs font-semibold tabular-nums tracking-[0.2em] text-on-surface-variant">
           {String(index + 1).padStart(2, '0')}
         </span>
       </div>
@@ -111,7 +118,7 @@ function ServiceCard({
         {service.description}
       </p>
 
-      {service.destinations && (
+      {service.destinations.length > 0 && (
         <ul
           className="mt-auto flex flex-wrap items-center border-t border-surface-container pt-4"
           aria-label={`Destinations : ${service.title}`}
@@ -136,10 +143,10 @@ function ServiceCard({
 }
 
 /**
- * Les six prestations de data/services.ts (les cinq de
- * docs/Services_Assistanat_Visa.pdf et le contrat de travail au Canada),
- * seuls services présentés sur le site. Chacune porte une couleur du logo,
- * reprise dans les témoignages et le pied de page.
+ * Les prestations de la section « Prestations » du panel (à l'origine, les
+ * cinq de docs/Services_Assistanat_Visa.pdf et le contrat de travail au
+ * Canada), seuls services présentés sur le site. Chacune porte une couleur
+ * du logo, reprise dans les témoignages et le pied de page.
  *
  * Trois présentations pour une seule liste de fiches (voir
  * lib/useHorizontalPin.ts) :
@@ -161,6 +168,9 @@ function ServiceCard({
  * resteraient donc invisibles.
  */
 export default function Services() {
+  const { services: section } = useContent();
+  const services = section.items;
+
   const {
     rootRef,
     pinRef,
@@ -192,13 +202,10 @@ export default function Services() {
     return () => window.removeEventListener('hashchange', follow);
   }, [pinned, scrollToCard]);
 
-  const title = 'Six procédures, un même accompagnement.';
+  const title = section.title;
 
   const intro = (
-    <p className="text-base leading-relaxed text-on-surface-variant">
-      Quel que soit votre projet, nous montons votre dossier avec rigueur et vous préparons à
-      chaque étape, jusqu'à la réponse du consulat.
-    </p>
+    <p className="text-base leading-relaxed text-on-surface-variant">{section.intro}</p>
   );
 
   const cta = (
@@ -228,9 +235,14 @@ export default function Services() {
   */
   const progress = (
     <div aria-hidden="true" className="flex w-full items-center gap-4">
-      <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-on-surface-variant">
+      {/*
+        Le rang en cours en gras, le total en graisse normale : la
+        hiérarchie passe par la graisse, pas par une couleur pâlie qui
+        tombait sous le contraste lisible (1,85).
+      */}
+      <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-primary">
         {String(activeIndex + 1).padStart(2, '0')}
-        <span className="text-on-surface-variant/40">
+        <span className="font-normal text-on-surface-variant">
           {' / '}
           {String(services.length).padStart(2, '0')}
         </span>
@@ -284,7 +296,9 @@ export default function Services() {
             */}
             <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-on-surface-variant">
               <Icon name="chevron_right" size={18} className="text-secondary" />
-              Glissez pour parcourir les six prestations
+              {services.length > 1
+                ? `Glissez pour parcourir les ${NUMBER_WORDS[services.length] ?? services.length} prestations`
+                : 'Notre prestation'}
             </p>
           </div>
         </Container>

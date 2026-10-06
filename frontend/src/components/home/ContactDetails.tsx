@@ -1,33 +1,7 @@
 import type { CSSProperties } from 'react';
 import Icon from '../ui/Icon';
-import { site, whatsappLink } from '../../data/site';
-
-const CHANNELS = [
-  {
-    icon: 'call',
-    iconBox: 'bg-secondary-fixed text-on-secondary-fixed',
-    label: 'Appelez-nous',
-    value: site.contact.phoneDisplay,
-    href: site.contact.phoneHref,
-    external: false,
-  },
-  {
-    icon: 'chat',
-    iconBox: 'bg-brand-green-soft text-brand-green',
-    label: 'WhatsApp',
-    value: 'Écrire sur WhatsApp',
-    href: whatsappLink(),
-    external: true,
-  },
-  {
-    icon: 'mail',
-    iconBox: 'bg-brand-blue-soft text-brand-blue',
-    label: 'Email',
-    value: site.contact.email,
-    href: `mailto:${site.contact.email}`,
-    external: false,
-  },
-];
+import { phoneHref, whatsappLink } from '../../data/site';
+import { useContent } from '../../content/ContentProvider';
 
 /**
  * Bloc d'invitation, à côté du formulaire : un message d'accueil et les
@@ -36,26 +10,54 @@ const CHANNELS = [
  * l'email, d'où leur ordre.
  */
 export default function ContactDetails() {
+  const { contact, company } = useContent();
+
+  const channels = [
+    {
+      icon: 'call',
+      iconBox: 'bg-secondary-fixed text-on-secondary-fixed',
+      label: 'Appelez-nous',
+      value: company.phoneDisplay,
+      href: phoneHref(company.phoneIntl),
+      external: false,
+    },
+    {
+      icon: 'chat',
+      iconBox: 'bg-brand-green-soft text-brand-green',
+      label: 'WhatsApp',
+      value: 'Écrire sur WhatsApp',
+      href: whatsappLink(company.whatsapp),
+      external: true,
+    },
+    {
+      icon: 'mail',
+      iconBox: 'bg-brand-blue-soft text-brand-blue',
+      label: 'Email',
+      value: company.email,
+      href: `mailto:${company.email}`,
+      external: false,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       {/* Centré tant que les coordonnées et le formulaire sont empilés. */}
       <div className="reveal text-center lg:text-left">
-        <span className="mb-3 block text-xs font-bold uppercase tracking-widest text-secondary">
-          Parlons de votre projet
+        <span className="mb-3 block text-xs font-bold uppercase tracking-widest text-secondary-ink">
+          {contact.eyebrow}
         </span>
 
         <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl">
-          Exprimez votre besoin, nous vous accompagnons.
+          {contact.title}
         </h2>
 
         <p className="mx-auto mt-4 max-w-[46ch] text-base leading-relaxed text-on-surface-variant lg:mx-0">
-          Dites-nous où vous souhaitez aller et ce qui vous retient : nous étudions votre
-          situation et vous répondons avec franchise, sans engagement.
+          {contact.text}
         </p>
       </div>
 
       <ul className="flex flex-col gap-3">
-        {CHANNELS.map((channel, index) => (
+        {channels.map((channel, index) => (
           <li
             key={channel.label}
             className="reveal"

@@ -19,14 +19,32 @@ export default defineConfig({
     // En développement, le front appelle /api/... sur son propre port et
     // Vite relaie vers PHP. Cela évite toute question de CORS en local et
     // reproduit la configuration de production, où les deux sont servis
-    // depuis le même domaine.
+    // depuis le même domaine (condition du cookie de session du panel).
+    //
+    // VITE_API_PROXY : adresse de l'API locale, par exemple le serveur
+    // intégré de PHP (php -S 127.0.0.1:8000 -t api/public) :
+    //   VITE_API_PROXY=http://127.0.0.1:8000 npm run dev
     proxy: {
       '/api': {
-        target: 'http://localhost/vlc-api',
+        target: process.env.VITE_API_PROXY || 'http://localhost/vlc-api',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+  },
+
+  ssgOptions: {
+    /*
+      Pages écrites en HTML au build. Le panel (/admin/*) et l'espace
+      client (/espace-client/*) n'ont chacun qu'une page pré-rendue, leur
+      racine, servie pour toutes leurs adresses par le .htaccess : leur
+      contenu dépend de la session, il est rendu dans le navigateur.
+    */
+    includedRoutes: (paths) => [
+      ...paths.filter((path) => !path.startsWith('/admin') && !path.startsWith('/espace-client')),
+      '/admin',
+      '/espace-client',
+    ],
   },
 
   build: {

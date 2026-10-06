@@ -4,36 +4,40 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use App\Core\Jwt;
+use App\Auth\ClientSession;
 use App\Core\Middleware;
 use App\Core\Request;
 use App\Core\Response;
+use App\Models\Client;
 use Closure;
 
 /**
- * Exige un jeton JWT valide.
+ * Réserve une route aux clients connectés à leur espace.
  *
- * Prévu pour l'espace client et l'administration (phase 2). Les
- * revendications décodées sont replacées dans la requête sous la clé
- * « auth » pour les contrôleurs.
+ * Même principe que AdminAuthMiddleware : le compte est relu en base à
+ * chaque requête, si bien qu'un compte supprimé ou dont le mot de passe a
+ * changé est refusé aussitôt, sans attendre l'expiration du cookie.
+ *
+ * Le client est ensuite disponible par $request->attribute('client'). Toute
+ * requête des contrôleurs de l'espace client part de son identifiant : un
+ * client ne peut atteindre que ses propres données.
  */
 final class AuthMiddleware implements Middleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->bearerToken();
+        $claims = ClientSession::claims($request);
+        $client = $claims !== null ? (new Client())->find($claims['id']) : null;
 
-        if ($token === null) {
-            return Response::error('Authentification requise.', 401);
+        if (
+            $client === null
+            || $client['password_hash'] === null
+            || (int) $client['token_version'] !== $claims['ver']
+        ) {
+            return ClientSession::end(Response::error('Session expirée. Reconnectez-vous.', 401));
         }
 
-        $claims = Jwt::decode($token);
-
-        if ($claims === null) {
-            return Response::error('Session expirée ou jeton invalide.', 401);
-        }
-
-        $request->setRouteParams(['__auth_id' => (string) ($claims['sub'] ?? ''), '__auth_role' => (string) ($claims['role'] ?? 'client')]);
+        $request->setAttribute('client', $client);
 
         return $next($request);
     }

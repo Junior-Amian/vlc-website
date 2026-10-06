@@ -26,9 +26,13 @@
     Header always unset X-Powered-By
 </IfModule>
 
-# Masque la version de PHP dans les en-têtes de réponse.
+# Masque la version de PHP dans les en-têtes de réponse. Limites d'envoi :
+# documents de l'espace client jusqu'à 10 Mo (voir aussi .user.ini, lu à la
+# place de ce bloc par PHP-FPM).
 <IfModule mod_php.c>
     php_flag expose_php off
+    php_value upload_max_filesize 12M
+    php_value post_max_size 13M
 </IfModule>
 
 # Empêche le listage du répertoire.

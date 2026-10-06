@@ -6,7 +6,7 @@
  * En production, le front et l'API sont sur le même domaine : /api reste
  * donc correct et aucune variable n'est nécessaire.
  */
-const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+export const API_BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 export type ApiSuccess<T> = { success: true; message?: string; data?: T };
 
@@ -27,15 +27,23 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<ApiSuccess<T>> {
+export async function request<T>(path: string, init?: RequestInit): Promise<ApiSuccess<T>> {
   let response: Response;
 
+  // Un envoi de fichiers (FormData) fixe lui-même son Content-Type, avec la
+  // frontière entre les parties : le forcer en JSON le rendrait illisible.
+  const isForm = init?.body instanceof FormData;
+
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${API_BASE}${path}`, {
       ...init,
+      // Le cookie de session du panel ne part que vers le même domaine.
+      credentials: 'same-origin',
       headers: {
-        'Content-Type': 'application/json',
+        ...(isForm ? {} : { 'Content-Type': 'application/json' }),
         Accept: 'application/json',
+        // Exigé par l'API pour toute modification du panel (CsrfMiddleware).
+        'X-Requested-With': 'XMLHttpRequest',
         ...init?.headers,
       },
     });
@@ -72,10 +80,12 @@ export type ContactPayload = {
   phone: string;
   message: string;
   consent: boolean;
+  /** Champ piège anti-robots, toujours vide chez un humain (voir ContactForm). */
+  website: string;
 };
 
 export function sendContactRequest(payload: ContactPayload) {
-  return request<{ id: number }>('/contact', {
+  return request<{ id: string }>('/contact', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

@@ -19,13 +19,12 @@ return [
         'from_name'    => Env::get('MAIL_FROM_NAME', 'VISILION CORPORATE'),
         // Adresse qui reçoit les demandes du formulaire de contact.
         'admin_address' => Env::get('MAIL_ADMIN_ADDRESS', 'infovisilioncorporate@gmail.com'),
+        // Adresse de l'équipe pour l'espace client : réponse aux emails
+        // d'invitation et de mot de passe. PROVISOIRE (adresse fictive) : le
+        // client la donnera une fois l'hébergement pris.
+        'dossiers_address' => Env::get('MAIL_DOSSIERS_ADDRESS', 'dossiers@visilioncorporate.com'),
     ],
 
-    'company' => [
-        'phone'    => '+225 01 51 46 30 51',
-        'whatsapp' => '2250151463051',
-        'email'    => 'contact@visilioncorporate.com',
-        'city'     => 'Abidjan, Côte d\'Ivoire',
-        'slogan'   => 'Notre vision, votre satisfaction',
-    ],
+    // Les coordonnées de l'entreprise ne vivent pas ici : elles se modifient
+    // dans le panel (section « Coordonnées », table content_sections).
 ];

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Core;
 
 /**
- * Représentation immuable de la requête HTTP entrante.
+ * Requête HTTP entrante. Ce que le client a envoyé est en lecture seule ;
+ * seuls les paramètres de route (posés par le routeur) et les attributs
+ * (posés par les middlewares) s'y ajoutent ensuite.
  */
 final class Request
 {
@@ -18,24 +20,24 @@ final class Request
         public readonly array $headers,
         public readonly array $files,
         public readonly string $ip,
+        public readonly array $cookies = [],
     ) {
     }
 
     /** @var array<string, string> */
     private array $routeParams = [];
 
+    /**
+     * Données posées en cours de traitement par les middlewares (l'administrateur
+     * authentifié, par exemple), distinctes des paramètres de route.
+     *
+     * @var array<string, mixed>
+     */
+    private array $attributes = [];
+
     public static function capture(): self
     {
         $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
-
-        // Certains clients ne savent émettre que GET/POST : on accepte la
-        // surcharge de méthode, mais uniquement depuis un POST.
-        if ($method === 'POST') {
-            $override = strtoupper((string) ($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? ''));
-            if (in_array($override, ['PUT', 'PATCH', 'DELETE'], true)) {
-                $method = $override;
-            }
-        }
 
         $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
@@ -56,6 +58,7 @@ final class Request
             headers: self::parseHeaders(),
             files:   $_FILES,
             ip:      self::clientIp(),
+            cookies: $_COOKIE,
         );
     }
 
@@ -142,5 +145,22 @@ final class Request
     public function param(string $key, ?string $default = null): ?string
     {
         return $this->routeParams[$key] ?? $default;
+    }
+
+    public function cookie(string $name): ?string
+    {
+        $value = $this->cookies[$name] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    public function setAttribute(string $key, mixed $value): void
+    {
+        $this->attributes[$key] = $value;
+    }
+
+    public function attribute(string $key, mixed $default = null): mixed
+    {
+        return $this->attributes[$key] ?? $default;
     }
 }
