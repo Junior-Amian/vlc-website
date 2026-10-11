@@ -11,7 +11,8 @@ const useMeasureEffect = typeof window === 'undefined' ? useEffect : useLayoutEf
 /**
  * Épingle une galerie horizontale le temps qu'on la traverse : la section
  * reste collée à l'écran et le défilement vertical fait avancer la piste de
- * cartes vers la gauche, au pixel près (1 px de molette = 1 px de piste).
+ * cartes vers la gauche, cran par cran. La hauteur réservée suit le rapport
+ * 1:1 (une fiche d'avance = sa largeur de défilement).
  *
  * Progressif par construction. `mode` vaut `'off'` au rendu serveur et au
  * premier rendu client : le HTML pré-rendu est donc la version simple, une
@@ -19,19 +20,23 @@ const useMeasureEffect = typeof window === 'undefined' ? useEffect : useLayoutEf
  * montage, et jamais si le visiteur a demandé de réduire les animations.
  * Aucune hydratation ne diverge. Deux présentations épinglées :
  *
- * - `wide` (grand écran) : titre à gauche, fiches qui défilent en face ;
+ * - `wide` (grand écran) : titre à gauche, deux fiches en face ;
  * - `narrow` (mobile et tablette, à condition que l'écran fasse au moins
- *   640 px de haut pour loger une fiche entière) : une fiche occupe la
- *   largeur, et chaque cran de défilement amène la suivante. Un aimantage
- *   léger (scroll-snap « proximity ») pose le défilement sur une fiche
- *   entière quand on s'arrête près d'elle, voir `step`.
+ *   640 px de haut pour loger une fiche entière) : titre au-dessus, une
+ *   fiche pleine largeur au téléphone, deux sur tablette.
+ *
+ * Dans les deux cas, la piste avance d'une seule fiche à la fois et ne
+ * s'arrête jamais entre deux (voir `update`). Un aimantage léger
+ * (scroll-snap « proximity ») pose en plus la page sur un cran quand on
+ * s'arrête près de lui, voir `step` et `stops`. Le nombre de fiches visibles
+ * n'est écrit nulle part ici : il découle de la largeur des fiches
+ * (Services.tsx), que le hook mesure.
  *
  * Écran trop bas (téléphone à l'horizontale) : pas d'épinglage, la liste
  * simple reste en place.
  *
- * La position est lissée (interpolation à 14 % par image) : la piste rattrape
- * la molette en ~150 ms au lieu de la suivre sèchement. C'est ce décalage
- * court qui donne la sensation de glissé.
+ * Le passage d'un cran au suivant est lissé (interpolation à 14 % par
+ * image) : la piste glisse jusqu'à la fiche suivante au lieu d'y sauter.
  *
  * Écritures hors du cycle React : la transformation est posée directement sur
  * le nœud dans la boucle d'animation, et l'avancement est publié en variable
@@ -72,8 +77,16 @@ export function useHorizontalPin(count: number) {
   const [mode, setMode] = useState<PinMode>('off');
   const pinned = mode !== 'off';
   const [height, setHeight] = useState(0);
-  /** Défilement vertical qui fait passer d'une fiche à la suivante. */
+  /**
+   * Défilement vertical qui fait avancer la piste d'une fiche : sa largeur
+   * plus l'écart, au pixel près puisque le rapport est de 1:1.
+   */
   const [step, setStep] = useState(0);
+  /**
+   * Positions d'arrêt de la piste : une par fiche, moins celles déjà visibles
+   * au départ (six fiches vues deux par deux : cinq arrêts).
+   */
+  const [stops, setStops] = useState(1);
   const [activeIndex, setActiveIndex] = useState(0);
   const [entered, setEntered] = useState(false);
 
@@ -127,13 +140,13 @@ export function useHorizontalPin(count: number) {
   }, []);
 
   /*
-    Aimantage des fiches sur mobile : les repères (voir Services.tsx) portent
+    Aimantage des fiches : les repères (voir Services.tsx) portent
     `scroll-snap-align`, mais l'aimantage ne vaut que si la page le déclare.
     « proximity » et non « mandatory » : on n'est attiré que si l'on s'arrête
     près d'une fiche, le reste de la page défile librement.
   */
   useEffect(() => {
-    if (mode !== 'narrow') return;
+    if (!pinned) return;
 
     const html = document.documentElement;
     html.style.scrollSnapType = 'y proximity';
@@ -141,7 +154,7 @@ export function useHorizontalPin(count: number) {
     return () => {
       html.style.scrollSnapType = '';
     };
-  }, [mode]);
+  }, [pinned]);
 
   /*
     Arrivée de la section à l'écran, pour déclencher l'entrée en cascade des
@@ -185,6 +198,7 @@ export function useHorizontalPin(count: number) {
       if (root) root.style.removeProperty('--progress');
       setHeight(0);
       setStep(0);
+      setStops(1);
       setActiveIndex(0);
       return;
     }
@@ -216,6 +230,11 @@ export function useHorizontalPin(count: number) {
       if (frame.current === 0) frame.current = requestAnimationFrame(animate);
     };
 
+    /** Pas d'une fiche à la suivante, en pixels de piste (0 : fiche unique). */
+    let cardStep = 0;
+    /** Rang du dernier cran, où la piste est au bout de sa course. */
+    let lastStop = 0;
+
     const update = () => {
       // Relu à chaque fois plutôt que mis en cache : un bloc au-dessus qui
       // change de hauteur (police qui arrive, image qui se pose) déplacerait
@@ -231,9 +250,19 @@ export function useHorizontalPin(count: number) {
           ? 0
           : Math.min(1, Math.max(0, (window.scrollY - offsetTop.current) / distance.current));
 
-      target.current = progress * distance.current;
+      // La piste ne s'arrête que sur un cran entier : elle passe à la fiche
+      // suivante à mi-chemin du défilement qui y mène, et la boucle
+      // d'animation l'y fait glisser. Une fiche n'est jamais laissée coupée,
+      // ce que l'aimantage seul ne garantit pas (il ne joue qu'à proximité
+      // d'un repère). La barre d'avancement, elle, suit le défilement.
+      const travelled = progress * distance.current;
+      const index = cardStep > 0 ? Math.min(lastStop, Math.round(travelled / cardStep)) : 0;
+
+      target.current =
+        cardStep === 0 ? travelled : index === lastStop ? distance.current : index * cardStep;
       root.style.setProperty('--progress', progress.toFixed(4));
-      setActiveIndex(Math.round(progress * (count - 1)));
+      // Rang de la première fiche visible.
+      setActiveIndex(index);
       start();
     };
 
@@ -267,10 +296,23 @@ export function useHorizontalPin(count: number) {
       // La distance à parcourir, c'est ce qui dépasse de la fenêtre. On
       // réserve autant de hauteur de défilement, d'où le rapport 1:1.
       distance.current = Math.max(0, track.scrollWidth - viewport.clientWidth);
+
+      // Le pas se lit entre deux fiches voisines plutôt que de se déduire du
+      // nombre de fiches visibles : une ou deux selon l'écran, c'est leur
+      // largeur qui en décide.
+      const items = track.children;
+      cardStep =
+        items.length > 1
+          ? (items[1] as HTMLElement).offsetLeft - (items[0] as HTMLElement).offsetLeft
+          : 0;
+
       lastWidth = window.innerWidth;
       lastHeight = window.innerHeight;
       setHeight((stage?.offsetHeight ?? window.innerHeight) + distance.current);
-      setStep(count > 1 ? distance.current / (count - 1) : 0);
+      lastStop = cardStep > 0 ? Math.round(distance.current / cardStep) : 0;
+
+      setStep(cardStep);
+      setStops(lastStop + 1);
       update();
     };
 
@@ -350,6 +392,9 @@ export function useHorizontalPin(count: number) {
     pinned,
     height,
     step,
+    stops,
+    /** Fiches visibles à la fois, pour le compteur (« 01 – 02 / 06 »). */
+    visible: Math.max(1, count - stops + 1),
     stickyTop,
     activeIndex,
     entered,

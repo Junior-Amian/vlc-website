@@ -124,12 +124,14 @@ export default function Header() {
           </a>
 
           {/*
-            Mène à l'annonce de l'espace client (phase 2), pas à une page de
-            connexion : il n'existe pas encore. Icône seule entre lg et xl,
-            où la place manque ; sous lg, le lien vit dans le menu mobile.
+            Mène à l'espace client lui-même (sa page de connexion), plus à la
+            section d'annonce. Lien ordinaire et non <Link> : l'espace est
+            une application chargée à part (ClientEntry). Icône seule entre
+            lg et xl, où la place manque ; sous lg, le lien vit dans le menu
+            mobile.
           */}
           <a
-            href="#espace-client"
+            href="/espace-client"
             aria-label="Espace client"
             className="group hidden h-11 items-center gap-2.5 whitespace-nowrap rounded-xl border border-primary/15 bg-primary/[0.04] p-1.5 text-sm font-semibold text-primary transition-colors duration-200 hover:border-primary hover:bg-primary hover:text-white active:scale-[0.98] lg:inline-flex xl:pr-4"
           >
@@ -215,7 +217,7 @@ export default function Header() {
             </a>
 
             <a
-              href="#espace-client"
+              href="/espace-client"
               onClick={closeMenu}
               className="flex items-center justify-center gap-3 rounded-xl border border-primary/15 bg-primary/[0.04] py-2.5 text-base font-semibold text-primary"
             >

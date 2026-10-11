@@ -43,6 +43,13 @@
   --color-surface-container-low: #f1f4fc;
   --color-surface-container: #e8eef9;
   --color-surface-container-high: #dde5f5;
+  /*
+    Contour d'un champ de saisie (audit du 10/10/2026). Les surfaces
+    ci-dessus séparent des blocs ; elles ne suffisent pas à repérer un champ
+    (1,27:1 sur blanc). Celui-ci donne 3,58:1 sur blanc et 3,43:1 sur
+    surface, au-dessus des 3:1 de WCAG 1.4.11.
+  */
+  --color-outline: #7d889b;
   --color-on-surface: #111c2d;
   --color-on-surface-variant: #4d5868;
 
@@ -215,6 +222,15 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
+
+    /*
+      Sauf les indicateurs de chargement : figés, ils ne disaient plus que
+      l'action est en cours (audit du 10/10/2026). Une rotation lente, sur
+      place, n'a rien du mouvement que ce réglage cherche à éviter.
+    */
+    .animate-spin {
+      animation-duration: 1.5s !important;
+    }
   }
 }
 
@@ -329,11 +345,13 @@
   }
 
   /*
-    Galerie épinglée sur mobile : une fiche pleine largeur, centrée, plafonnée
-    à 30rem sur tablette. Retrait = (largeur − fiche) / 2, pour que chaque
-    fiche arrive exactement au centre et que la distance entre deux fiches
-    soit une largeur de fiche plus l'écart. Mêmes valeurs que CARD_WIDTH.full
-    dans Services.tsx.
+    Galerie épinglée sur mobile : au téléphone, une fiche pleine largeur,
+    centrée, plafonnée à 30rem. Retrait = (largeur − fiche) / 2, pour que
+    chaque fiche arrive exactement au centre et que la distance entre deux
+    fiches soit une largeur de fiche plus l'écart. À partir de sm, deux
+    fiches entre deux retraits de 1.5rem, égaux à l'écart (sm:gap-6) : plus
+    larges que lui, ils laisseraient dépasser un liseré de la fiche
+    suivante. Mêmes valeurs que CARD_STYLE.narrow dans Services.tsx.
   */
   .services-track-narrow {
     padding-inline: max(1rem, calc((100% - 30rem) / 2));
@@ -372,6 +390,10 @@
     .services-scroller {
       scroll-padding-inline: max(2rem, calc((100% - 80rem) / 2 + 2rem));
     }
+
+    .services-track-narrow {
+      padding-inline: 1.5rem;
+    }
   }
 
   /*
@@ -381,21 +403,6 @@
   */
   .services-progress {
     width: calc(var(--progress, 0) * 100%);
-  }
-
-  /*
-    Fondu du bord droit de la galerie épinglée : il signale qu'il reste des
-    fiches au-delà de la coupe. Sa position dépend du même --progress, si
-    bien qu'il recule au fil de l'avancement et disparaît complètement à
-    l'arrivée — sans quoi la dernière fiche resterait voilée alors qu'il n'y
-    a plus rien après elle.
-  */
-  .services-viewport {
-    mask-image: linear-gradient(
-      to right,
-      #000 calc(86% + var(--progress, 0) * 14%),
-      transparent
-    );
   }
 
   /*

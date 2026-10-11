@@ -3,11 +3,15 @@ import Section from '../ui/Section';
 import { useContent } from '../../content/ContentProvider';
 
 /*
-  Annonce de l'espace client (phase 2).
+  Présentation de l'espace client, ouvert le 10/10/2026, avec son bouton
+  d'accès (le même lien que « Espace client » dans l'en-tête).
 
-  Les boutons de connexion de la maquette ont été remplacés par une mention
-  « bientôt disponible » : proposer un accès qui n'existe pas encore
-  dégraderait la confiance, qui est justement l'argument de cette section.
+  L'encadré dit comment on obtient un accès : l'espace est sur invitation,
+  un visiteur qui n'a pas de dossier ne peut pas s'y inscrire seul.
+
+  Bouton blanc et non ocre : sur ce fond marine, il se distingue de
+  « Démarrer ma procédure », qui reste l'appel principal du site. Lien
+  ordinaire et non <Link> : l'espace est une application chargée à part.
 */
 export default function ClientPortalCta() {
   const { portal } = useContent();
@@ -27,11 +31,7 @@ export default function ClientPortalCta() {
         <div className="relative z-10 grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
           {/* Centré sur une colonne ; la liste garde ses lignes alignées à gauche. */}
           <div className="flex flex-col items-center gap-5 text-center lg:col-span-8 lg:items-start lg:text-left">
-            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-semibold text-brand-yellow">
-              <Icon name="schedule" size={16} />
-              {portal.badge}
-            </span>
-
+          
             <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl lg:text-4xl">
               {portal.title}
             </h2>
@@ -50,7 +50,16 @@ export default function ClientPortalCta() {
             </ul>
           </div>
 
-          <div className="flex flex-col gap-3 lg:col-span-4">
+          <div className="flex flex-col gap-4 lg:col-span-4">
+            <a
+              href="/espace-client"
+              className="flex items-center justify-center gap-2.5 rounded-xl bg-white px-6 py-4 text-base font-semibold text-primary transition-colors hover:bg-surface-container-low active:scale-[0.98]"
+            >
+              <Icon name="person" size={20} className="text-secondary" />
+              <span>{portal.button}</span>
+              <Icon name="arrow_forward" size={20} className="arrow-nudge" />
+            </a>
+
             <div className="rounded-2xl border border-white/20 bg-white/10 p-6">
               <p className="text-center text-sm leading-relaxed text-on-primary-soft lg:text-left">
                 {portal.aside}

@@ -96,6 +96,8 @@ export type SiteContent = {
     badge: string;
     title: string;
     text: string;
+    /** Libellé du bouton qui mène à /espace-client. */
+    button: string;
     features: { icon: string; text: string }[];
     aside: string;
   };

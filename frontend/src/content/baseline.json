@@ -230,9 +230,10 @@
     ]
   },
   "portal": {
-    "badge": "Bientôt disponible",
+    "badge": "Désormais disponible",
     "title": "Votre espace client, pour suivre votre dossier en ligne.",
-    "text": "Nous préparons un espace client qui vous permettra de consulter l'avancement de votre dossier en temps réel, de déposer vos justificatifs en toute sécurité et d'échanger directement avec votre conseiller dédié.",
+    "text": "Consultez l'avancement de votre dossier en temps réel, déposez vos justificatifs en toute sécurité et échangez directement avec votre conseiller dédié, depuis votre téléphone comme depuis votre ordinateur.",
+    "button": "Accéder à mon espace",
     "features": [
       {
         "icon": "notifications_active",
@@ -251,7 +252,7 @@
         "text": "Suivi transparent des règlements"
       }
     ],
-    "aside": "En attendant, votre conseiller assure le suivi complet de votre dossier par téléphone et WhatsApp, comme aujourd'hui."
+    "aside": "Votre conseiller crée votre accès à l'ouverture de votre dossier : vous recevez alors par email un lien pour choisir votre mot de passe."
   },
   "contact": {
     "eyebrow": "Parlons de votre projet",

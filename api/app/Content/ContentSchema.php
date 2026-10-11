@@ -277,11 +277,12 @@ final class ContentSchema
             'portal' => [
                 'label'       => 'Espace client',
                 'group'       => 'content',
-                'description' => 'L\'annonce de l\'espace client à venir.',
+                'description' => 'La présentation de l\'espace client et son bouton d\'accès.',
                 'fields'      => [
                     $f('string', 'badge', 'Pastille', ['max' => 30]),
                     $f('string', 'title', 'Titre', ['max' => 90]),
                     $f('text', 'text', 'Texte', ['max' => 400]),
+                    $f('string', 'button', 'Bouton d\'accès', ['max' => 30]),
                     $f('items', 'features', 'Fonctionnalités', [
                         'itemLabel'  => 'Fonctionnalité',
                         'titleField' => 'text',

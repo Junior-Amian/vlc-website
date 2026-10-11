@@ -34,7 +34,7 @@ INSERT IGNORE INTO `content_sections` (`section_key`, `data`) VALUES
 
 -- Espace client
 INSERT IGNORE INTO `content_sections` (`section_key`, `data`) VALUES
-('portal', '{"badge":"Bientôt disponible","title":"Votre espace client, pour suivre votre dossier en ligne.","text":"Nous préparons un espace client qui vous permettra de consulter l''avancement de votre dossier en temps réel, de déposer vos justificatifs en toute sécurité et d''échanger directement avec votre conseiller dédié.","features":[{"icon":"notifications_active","text":"Alertes à chaque étape franchie"},{"icon":"shield","text":"Dépôt de documents sécurisé"},{"icon":"forum","text":"Messagerie directe avec votre conseiller"},{"icon":"payments","text":"Suivi transparent des règlements"}],"aside":"En attendant, votre conseiller assure le suivi complet de votre dossier par téléphone et WhatsApp, comme aujourd''hui."}');
+('portal', '{"badge":"Désormais disponible","title":"Votre espace client, pour suivre votre dossier en ligne.","text":"Consultez l''avancement de votre dossier en temps réel, déposez vos justificatifs en toute sécurité et échangez directement avec votre conseiller dédié, depuis votre téléphone comme depuis votre ordinateur.","button":"Accéder à mon espace","features":[{"icon":"notifications_active","text":"Alertes à chaque étape franchie"},{"icon":"shield","text":"Dépôt de documents sécurisé"},{"icon":"forum","text":"Messagerie directe avec votre conseiller"},{"icon":"payments","text":"Suivi transparent des règlements"}],"aside":"Votre conseiller crée votre accès à l''ouverture de votre dossier : vous recevez alors par email un lien pour choisir votre mot de passe."}');
 
 -- Contact
 INSERT IGNORE INTO `content_sections` (`section_key`, `data`) VALUES

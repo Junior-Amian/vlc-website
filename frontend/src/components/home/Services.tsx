@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import Icon from '../ui/Icon';
 import { Container } from '../ui/Section';
 import { brand } from '../ui/brand';
-import { useHorizontalPin } from '../../lib/useHorizontalPin';
+import { useHorizontalPin, type PinMode } from '../../lib/useHorizontalPin';
 import { useContent } from '../../content/ContentProvider';
 import type { Service } from '../../content/types';
 
@@ -34,30 +34,42 @@ const NUMBER_WORDS = [
  * sauter la carte au lieu de la faire monter.
  */
 /*
-  Deux formats de fiche.
+  Un format de fiche par présentation de la galerie (voir Services).
 
-  - `gallery` : galerie au doigt et grand écran épinglé.
-  - `full` (mobile épinglé) : la fiche occupe toute la largeur, à sa hauteur
-    naturelle (étirée sur tout l'écran, elle se remplissait de blanc). Marges
-    intérieures plus larges que dans la galerie, et textes qui suivent un peu
-    la hauteur d'écran (svh), bornés : jamais sous 16 px, et plafonnés pour
-    que titre, compteur et fiche tiennent ensemble à l'écran. Largeur : mêmes
-    valeurs que .services-track-narrow dans index.css (30rem, 1rem).
+  - `off` (galerie au doigt) : largeur fixe, la fiche suivante dépasse.
+  - `wide` (grand écran épinglé) : deux fiches exactement remplissent la
+    fenêtre de la galerie. 100cqw est la largeur de cette fenêtre (déclarée
+    `@container`), pas celle de l'écran, dont la colonne de titre prend la
+    gauche ; 1.5rem = l'écart `gap-6` de la piste.
+  - `narrow` (mobile épinglé) : à sa hauteur naturelle (étirée sur tout
+    l'écran, elle se remplissait de blanc). Au téléphone, une fiche pleine
+    largeur, avec des textes qui suivent un peu la hauteur d'écran (svh),
+    bornés : jamais sous 16 px, et plafonnés pour que titre, compteur et
+    fiche tiennent ensemble à l'écran. À partir de sm, deux fiches : 4.5rem =
+    les deux retraits de 1.5rem de la piste et son écart `sm:gap-6`. Ces
+    valeurs sont celles de .services-track-narrow dans index.css (30rem,
+    1rem, 1.5rem).
 */
 const CARD_STYLE = {
-  gallery: {
+  off: {
     card: 'w-[17.5rem] gap-4 p-6 sm:w-[19.5rem] lg:w-[22rem] lg:p-7',
     title: 'text-xl',
     tagline: 'text-base lg:text-[0.9375rem]',
     text: 'text-base leading-relaxed lg:text-[0.9375rem] lg:leading-[1.7]',
   },
-  full: {
-    card: 'w-[min(calc(100vw-2rem),30rem)] gap-4 px-6 py-7 sm:gap-5 sm:p-10',
-    title: 'text-[clamp(1.25rem,2.8svh,1.5rem)] sm:text-[1.75rem]',
-    tagline: 'text-[clamp(1rem,1.9svh,1.0625rem)] sm:text-lg',
-    text: 'text-[clamp(1rem,1.9svh,1.0625rem)] leading-relaxed sm:text-lg',
+  wide: {
+    card: 'w-[calc((100cqw-1.5rem)/2)] gap-4 p-7 xl:p-8',
+    title: 'text-xl xl:text-2xl',
+    tagline: 'text-[0.9375rem] xl:text-base',
+    text: 'text-[0.9375rem] leading-[1.7] xl:text-base',
   },
-};
+  narrow: {
+    card: 'w-[min(calc(100cqw-2rem),30rem)] gap-4 px-6 py-7 sm:w-[calc((100cqw-4.5rem)/2)] sm:p-7',
+    title: 'text-[clamp(1.25rem,2.8svh,1.5rem)]',
+    tagline: 'text-[clamp(1rem,1.9svh,1.0625rem)]',
+    text: 'text-[clamp(1rem,1.9svh,1.0625rem)] leading-relaxed',
+  },
+} satisfies Record<PinMode, Record<string, string>>;
 
 function ServiceCard({
   service,
@@ -66,7 +78,7 @@ function ServiceCard({
 }: {
   service: Service;
   index: number;
-  format: keyof typeof CARD_STYLE;
+  format: PinMode;
 }) {
   const colors = brand[service.color];
   const style = CARD_STYLE[format];
@@ -154,11 +166,13 @@ function ServiceCard({
  * - `off` (sans JavaScript, animations réduites, écran trop bas) : le titre
  *   au-dessus, puis une galerie qui se fait défiler au doigt ;
  * - `wide` (grand écran) : la section s'épingle, le titre tient la colonne
- *   de gauche et les fiches défilent en face de lui, poussées par le
- *   défilement vertical ;
+ *   de gauche et deux fiches lui font face, poussées par le défilement
+ *   vertical ;
  * - `narrow` (mobile et tablette) : même mécanique, mais le titre reste
- *   au-dessus, hors de la partie épinglée, et chaque fiche occupe toute la
- *   largeur. Des repères invisibles aimantent le défilement sur chaque fiche.
+ *   au-dessus ; une fiche pleine largeur au téléphone, deux sur tablette.
+ *
+ * Épinglée, la galerie avance d'une fiche à la fois : des repères invisibles
+ * aimantent le défilement sur chaque cran.
  *
  * C'est la première qui est pré-rendue : le contenu est lisible et navigable
  * même si le script ne s'exécute jamais.
@@ -180,6 +194,8 @@ export default function Services() {
     pinned,
     height,
     step,
+    stops,
+    visible,
     stickyTop,
     activeIndex,
     entered,
@@ -233,15 +249,19 @@ export default function Services() {
     variable CSS --progress, écrite hors de React pour ne pas provoquer un
     rendu à chaque image.
   */
+  const rank = (index: number) => String(index + 1).padStart(2, '0');
+
   const progress = (
     <div aria-hidden="true" className="flex w-full items-center gap-4">
       {/*
-        Le rang en cours en gras, le total en graisse normale : la
-        hiérarchie passe par la graisse, pas par une couleur pâlie qui
-        tombait sous le contraste lisible (1,85).
+        Les rangs à l'écran en gras (« 01 – 02 » quand deux fiches sont
+        visibles), le total en graisse normale : la hiérarchie passe par la
+        graisse, pas par une couleur pâlie qui tombait sous le contraste
+        lisible (1,85).
       */}
-      <span className="text-xs font-bold tabular-nums tracking-[0.2em] text-primary">
-        {String(activeIndex + 1).padStart(2, '0')}
+      <span className="whitespace-nowrap text-xs font-bold tabular-nums tracking-[0.2em] text-primary">
+        {rank(activeIndex)}
+        {visible > 1 && ` – ${rank(activeIndex + visible - 1)}`}
         <span className="font-normal text-on-surface-variant">
           {' / '}
           {String(services.length).padStart(2, '0')}
@@ -273,7 +293,7 @@ export default function Services() {
       <ServiceCard
         service={service}
         index={index}
-        format={mode === 'narrow' ? 'full' : 'gallery'}
+        format={mode}
       />
     </li>
   ));
@@ -324,17 +344,18 @@ export default function Services() {
       */}
       <div ref={pinRef} className="relative" style={pinned && height > 0 ? { height } : undefined}>
         {/*
-          Repères d'aimantage (mobile épinglé) : un par fiche, espacés du
-          défilement qui fait passer à la suivante. Décalés de 8rem, soit le
+          Repères d'aimantage : un par position d'arrêt, espacés du
+          défilement qui fait avancer d'une fiche. Décalés de 8rem, soit le
           scroll-padding-top de la page (index.css), sans quoi l'aimantage
-          s'arrêterait 8rem trop tôt, et remontés de `stickyTop` : l'épinglage
-          commence quand le bloc arrive sous l'en-tête, pas en haut de l'écran.
+          s'arrêterait 8rem trop tôt, et remontés de `stickyTop` : sur mobile,
+          l'épinglage commence quand le bloc arrive sous l'en-tête, pas en
+          haut de l'écran.
         */}
-        {mode === 'narrow' &&
+        {pinned &&
           step > 0 &&
-          services.map((service, index) => (
+          Array.from({ length: stops }, (_, index) => (
             <span
-              key={service.slug}
+              key={index}
               aria-hidden="true"
               className="pointer-events-none absolute left-0 h-px w-px snap-start"
               style={{ top: `calc(${index * step - stickyTop}px + 8rem)` }}
@@ -355,15 +376,15 @@ export default function Services() {
               </div>
 
               {/*
-                Le fondu du bord droit annonce qu'il reste des fiches. Il
-                s'efface à mesure qu'on avance (voir .services-viewport dans
-                index.css) : arrivé au bout, la dernière fiche est nette.
+                Pas de fondu sur le bord droit : deux fiches entières
+                remplissent la fenêtre, il couvrirait du texte de la seconde.
+                Le compteur et sa barre disent ce qu'il reste.
               */}
               <div
                 ref={viewportRef}
                 role="region"
                 aria-label="Nos prestations visa"
-                className="services-viewport min-w-0 flex-1 overflow-hidden"
+                className="@container min-w-0 flex-1 overflow-hidden"
               >
                 <ul
                   ref={trackRef}
@@ -405,13 +426,14 @@ export default function Services() {
               ref={viewportRef}
               role="region"
               aria-label="Nos prestations visa"
-              className="shrink-0 overflow-hidden"
+              className="@container shrink-0 overflow-hidden"
             >
               <ul
                 ref={trackRef}
-                // items-center et non items-stretch : chaque fiche garde sa
+                // Au téléphone, items-center : la fiche seule garde sa
                 // hauteur, sans blanc ajouté pour s'aligner sur la plus haute.
-                className="services-track-narrow relative flex w-max items-center gap-4 py-2 will-change-transform"
+                // Deux côte à côte (sm) doivent en revanche s'aligner.
+                className="services-track-narrow relative flex w-max items-center gap-4 py-2 will-change-transform sm:items-stretch sm:gap-6"
               >
                 {cards}
               </ul>
