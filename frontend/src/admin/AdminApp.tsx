@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ApiError } from '../lib/api';
+import { useIdleSession } from '../lib/session';
 import { adminApi, errorMessage, setUnauthorizedHandler } from './api';
 import { AdminContext, type AdminContextValue } from './AdminContext';
 import AdminLayout from './AdminLayout';
@@ -71,6 +72,16 @@ export default function AdminApp() {
     return () => setUnauthorizedHandler(null);
   }, []);
 
+  // 20 minutes sans activité : retour à la connexion, comme sur un 401.
+  useIdleSession({
+    active: state.status === 'ready',
+    ping: () => adminApi.me(),
+    onExpire: () => {
+      setDirty(false);
+      setState((current) => (current.status === 'ready' ? { status: 'guest', expired: true } : current));
+    },
+  });
+
   const logout = useCallback(() => {
     adminApi.logout().catch(() => undefined);
     setDirty(false);
@@ -84,16 +95,18 @@ export default function AdminApp() {
   const [dossierAlerts, setDossierAlerts] = useState(0);
   const ready = state.status === 'ready';
 
-  const refreshRequests = useCallback(() => {
+  // `background` : rafraîchissement automatique, qui ne prolonge pas la
+  // session (lib/session.ts).
+  const refreshRequests = useCallback((background = false) => {
     adminApi
-      .requestCounts()
+      .requestCounts(background)
       .then((response) => setNewRequests(response.data?.new ?? 0))
       .catch(() => undefined);
   }, []);
 
-  const refreshDossierAlerts = useCallback(() => {
+  const refreshDossierAlerts = useCallback((background = false) => {
     adminApi
-      .dossierAlerts()
+      .dossierAlerts(background)
       .then((response) => setDossierAlerts(response.data?.attention ?? 0))
       .catch(() => undefined);
   }, []);
@@ -103,13 +116,13 @@ export default function AdminApp() {
       return;
     }
 
-    const refresh = () => {
-      refreshRequests();
-      refreshDossierAlerts();
+    const refresh = (background: boolean) => {
+      refreshRequests(background);
+      refreshDossierAlerts(background);
     };
 
-    refresh();
-    const timer = window.setInterval(refresh, 60_000);
+    refresh(false);
+    const timer = window.setInterval(() => refresh(true), 60_000);
 
     return () => window.clearInterval(timer);
   }, [ready, refreshRequests, refreshDossierAlerts]);

@@ -43,6 +43,30 @@ abstract class SessionCookie
         return $response->withCookie(static::COOKIE, $token, self::options(time() + static::TTL));
     }
 
+    /**
+     * Prolonge la session d'une requête authentifiée : la durée (TTL) se
+     * compte donc depuis la dernière action, pas depuis la connexion
+     * (20 minutes d'inactivité, demande du 11/10/2026).
+     *
+     * Ne prolonge pas :
+     * - une requête marquée `X-Background` : les rafraîchissements
+     *   automatiques (fil de messages, compteurs du panel) ne sont pas une
+     *   activité ; sans cela, un onglet ouvert resterait connecté sans fin ;
+     * - une réponse qui pose déjà ce cookie : le contrôleur vient d'ouvrir
+     *   (mot de passe changé) ou de fermer (déconnexion) la session, et
+     *   c'est son cookie qui doit partir.
+     *
+     * @param array<string, mixed> $account Ligne de la base : id et token_version.
+     */
+    public static function refresh(Request $request, Response $response, array $account): Response
+    {
+        if ($request->header('X-Background') !== null || $response->hasCookie(static::COOKIE)) {
+            return $response;
+        }
+
+        return static::start($response, $account);
+    }
+
     public static function end(Response $response): Response
     {
         return $response->withCookie(static::COOKIE, '', self::options(time() - 3600));

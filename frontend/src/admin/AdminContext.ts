@@ -14,11 +14,11 @@ export type AdminContextValue = {
   /** Demandes de contact que personne n'a encore ouvertes (badge du menu). */
   newRequests: number;
   /** Recompte les demandes, après une modification ou en tâche de fond. */
-  refreshRequests: () => void;
+  refreshRequests: (background?: boolean) => void;
   /** Dossiers avec une pièce à vérifier ou un message non lu (badge du menu). */
   dossierAlerts: number;
   /** Recompte ces dossiers, après une lecture ou une vérification. */
-  refreshDossierAlerts: () => void;
+  refreshDossierAlerts: (background?: boolean) => void;
 };
 
 export const AdminContext = createContext<AdminContextValue | null>(null);

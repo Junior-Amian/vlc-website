@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import Icon from '../../components/ui/Icon';
 import { ButtonSpinner, describedBy, FieldShell, Notice, Spinner } from '../../components/ui/controls';
 import { ApiError } from '../../lib/api';
+import { formatFirstName } from '../../lib/format';
 import AuthFrame, { BackToLogin } from '../AuthFrame';
 import { clientApi } from '../api';
 import type { AccessInfo } from '../types';
@@ -111,7 +112,7 @@ export default function AccessPage({ onDone }: { onDone: () => void }) {
   }
 
   const { access } = state;
-  const firstName = access.fullName.split(' ')[0] || access.fullName;
+  const firstName = formatFirstName(access.fullName);
   const invite = access.type === 'invite';
 
   return (

@@ -13,6 +13,11 @@ function today(): string {
  *
  * Une liste courte (quatre choix au plus) devient des boutons à cocher, plus
  * simples au doigt qu'une liste déroulante.
+ *
+ * Une colonne au téléphone ; deux à partir de sm, où les questions vont par
+ * paires (nom et prénoms, date et lieu de naissance). Les boutons à cocher
+ * prennent toute la largeur, deux par deux : sur une seule rangée, « Veuf ou
+ * veuve » passait sur deux lignes.
  */
 export default function OnboardingFields({
   fields,
@@ -26,7 +31,7 @@ export default function OnboardingFields({
   onChange: (key: string, value: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="grid gap-5 sm:grid-cols-2 sm:gap-x-4">
       {fields.map((field) => {
         const id = `onboarding-${field.key}`;
         const value = values[field.key] ?? '';
@@ -40,7 +45,7 @@ export default function OnboardingFields({
 
         if (field.type === 'select' && field.options && field.options.length <= 4) {
           return (
-            <fieldset key={field.key} className="flex flex-col gap-1.5" aria-describedby={describedBy(id, undefined, fieldErrors)}>
+            <fieldset key={field.key} className="flex flex-col gap-1.5 sm:col-span-2" aria-describedby={describedBy(id, undefined, fieldErrors)}>
               <legend className="mb-1.5 text-sm font-semibold text-primary">
                 {field.label}
                 {!field.required && <span className="font-normal text-on-surface-variant"> (facultatif)</span>}

@@ -25,81 +25,96 @@ export default function ProfilePage() {
     <div className="flex flex-col gap-6">
       <PageTitle title="Votre profil" />
 
-      <Card className="flex flex-col gap-5 sm:flex-row sm:items-center">
-        <Avatar name={client.fullName} className="h-16 w-16 text-xl" />
-        <div className="flex min-w-0 flex-col gap-1">
-          <p className="text-lg font-bold text-primary">{client.fullName}</p>
-          <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-            <Icon name="mail" size={18} className="shrink-0" />
-            <span className="truncate">{client.email}</span>
-          </p>
-          {client.phone && (
+      {/*
+        À partir de xl : l'identité, le mot de passe et la déconnexion à
+        gauche ; les informations, plus longues, à droite. Placement par la
+        grille seulement : l'ordre de lecture reste celui du téléphone
+        (identité, informations, mot de passe). La dernière rangée prend la
+        hauteur restante, pour que les blocs de gauche restent serrés.
+      */}
+      <div className="grid items-start gap-6 xl:grid-cols-[22rem_minmax(0,1fr)] xl:grid-rows-[auto_auto_1fr] xl:gap-x-8">
+        <Card className="flex flex-col gap-5 sm:flex-row sm:items-center xl:col-start-1 xl:row-start-1 xl:flex-col xl:items-start">
+          <Avatar name={client.fullName} className="h-16 w-16 text-xl" />
+          <div className="flex min-w-0 flex-col gap-1">
+            <p className="text-lg font-bold text-primary">{client.fullName}</p>
             <p className="flex items-center gap-2 text-sm text-on-surface-variant">
-              <Icon name="call" size={18} className="shrink-0" />
-              {client.phone}
+              <Icon name="mail" size={18} className="shrink-0" />
+              <span className="truncate">{client.email}</span>
             </p>
-          )}
-          <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
-            Pour changer d'email ou de téléphone, prévenez votre conseiller.
-          </p>
-        </div>
-      </Card>
+            {client.phone && (
+              <p className="flex items-center gap-2 text-sm text-on-surface-variant">
+                <Icon name="call" size={18} className="shrink-0" />
+                {client.phone}
+              </p>
+            )}
+            <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+              Pour changer d'email ou de téléphone, prévenez votre conseiller.
+            </p>
+          </div>
+        </Card>
 
-      <Card className="flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-base font-bold text-primary">Vos informations</h2>
-          {!editing && (
-            <button
-              type="button"
-              onClick={() => {
-                setEditing(true);
-                setSaved(false);
+        <Card className="flex flex-col gap-5 xl:col-start-2 xl:row-span-3 xl:row-start-1">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-base font-bold text-primary">Vos informations</h2>
+            {!editing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(true);
+                  setSaved(false);
+                }}
+                className={buttonClass.secondary}
+              >
+                <Icon name="edit" size={18} />
+                Modifier
+              </button>
+            )}
+          </div>
+
+          {saved && <Notice tone="success">Informations enregistrées.</Notice>}
+
+          {editing ? (
+            <ProfileForm
+              onDone={(didSave) => {
+                setEditing(false);
+                setSaved(didSave);
               }}
-              className={buttonClass.secondary}
-            >
-              <Icon name="edit" size={18} />
-              Modifier
-            </button>
+            />
+          ) : (
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+              {fields.map((field) => {
+                const raw = client.profile[field.key] ?? '';
+                const value =
+                  field.type === 'select'
+                    ? field.options?.find((option) => option.value === raw)?.label ?? raw
+                    : field.type === 'date' && raw
+                      ? formatLongDate(raw)
+                      : raw;
+
+                return (
+                  <div key={field.key} className="flex flex-col gap-0.5">
+                    <dt className="text-xs text-on-surface-variant">{field.label}</dt>
+                    <dd className="text-[0.9375rem] font-semibold text-primary">{value || '—'}</dd>
+                  </div>
+                );
+              })}
+            </dl>
           )}
+        </Card>
+
+        <div className="xl:col-start-1 xl:row-start-2">
+          <PasswordCard email={client.email} />
         </div>
 
-        {saved && <Notice tone="success">Informations enregistrées.</Notice>}
-
-        {editing ? (
-          <ProfileForm
-            onDone={(didSave) => {
-              setEditing(false);
-              setSaved(didSave);
-            }}
-          />
-        ) : (
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            {fields.map((field) => {
-              const raw = client.profile[field.key] ?? '';
-              const value =
-                field.type === 'select'
-                  ? field.options?.find((option) => option.value === raw)?.label ?? raw
-                  : field.type === 'date' && raw
-                    ? formatLongDate(raw)
-                    : raw;
-
-              return (
-                <div key={field.key} className="flex flex-col gap-0.5">
-                  <dt className="text-xs text-on-surface-variant">{field.label}</dt>
-                  <dd className="text-[0.9375rem] font-semibold text-primary">{value || '—'}</dd>
-                </div>
-              );
-            })}
-          </dl>
-        )}
-      </Card>
-
-      <PasswordCard email={client.email} />
-
-      <button type="button" onClick={logout} className={`${buttonClass.secondary} w-full sm:w-auto sm:self-start`}>
-        <Icon name="logout" size={20} />
-        Se déconnecter
-      </button>
+        <button
+          type="button"
+          onClick={logout}
+          className={`${buttonClass.secondary} w-full sm:w-auto sm:justify-self-start xl:col-start-1 xl:row-start-3`}
+        >
+          <Icon name="logout" size={20} />
+          Se déconnecter
+        </button>
+      </div>
     </div>
   );
 }

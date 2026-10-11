@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { Notice } from '../components/ui/controls';
 import { ApiError } from '../lib/api';
+import { useIdleSession } from '../lib/session';
 import { clientApi, setUnauthorizedHandler } from './api';
 import { ClientContext, type ClientContextValue } from './ClientContext';
 import { ClientLoading } from './ClientEntry';
@@ -68,6 +69,13 @@ export default function ClientApp() {
 
     return () => setUnauthorizedHandler(null);
   }, []);
+
+  // 20 minutes sans activité : retour à la connexion, comme sur un 401.
+  useIdleSession({
+    active: state.status === 'ready',
+    ping: () => clientApi.me(),
+    onExpire: () => setState((current) => (current.status === 'ready' ? { status: 'guest', expired: true } : current)),
+  });
 
   const logout = useCallback(() => {
     clientApi.logout().catch(() => undefined);

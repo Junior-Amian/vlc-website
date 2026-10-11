@@ -25,8 +25,10 @@ export const buttonClass = {
     'inline-flex h-11 w-11 pointer-fine:h-10 pointer-fine:w-10 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary disabled:pointer-events-none disabled:opacity-30',
 };
 
+// Bordure `outline` et non `surface-container-high` : le contour d'un champ
+// doit atteindre 3:1 pour qu'on le repère (WCAG 1.4.11).
 export const inputClass =
-  'w-full rounded-xl border border-surface-container-high bg-white px-3.5 py-2.5 text-base text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:ring-2 focus:ring-primary/10 pointer-fine:text-sm aria-[invalid=true]:border-brand-red-ink';
+  'w-full rounded-xl border border-outline bg-white px-3.5 py-2.5 text-base text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/85 focus:border-primary focus:ring-2 focus:ring-primary/10 pointer-fine:text-sm aria-[invalid=true]:border-brand-red-ink';
 
 /**
  * Signature du logo : ses quatre barres de couleur, dans le même ordre que
@@ -95,7 +97,14 @@ export function Notice({
       <Icon name={tone === 'success' ? 'check' : tone === 'error' ? 'error' : 'schedule'} size={20} className="mt-px shrink-0" />
       <div className="min-w-0 flex-1 leading-relaxed">{children}</div>
       {onClose && (
-        <button type="button" onClick={onClose} aria-label="Fermer le message" className="-m-1 rounded p-1 hover:bg-black/5">
+        // Cible de 44 px (40 à la souris), compensée par une marge négative
+        // pour ne pas épaissir le message.
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le message"
+          className="-my-2.5 -mr-2.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-black/5 pointer-fine:h-10 pointer-fine:w-10"
+        >
           <Icon name="close" size={18} />
         </button>
       )}

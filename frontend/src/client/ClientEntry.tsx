@@ -16,7 +16,7 @@ const ClientApp = lazy(() => import('./ClientApp'));
   s'affiche comme un mot.
 */
 const CLIENT_ICONS = [
-  'arrow_back', 'arrow_forward', 'call', 'chat', 'check', 'check_circle', 'close', 'delete',
+  'arrow_back', 'arrow_forward', 'call', 'chat', 'check', 'check_circle', 'chevron_right', 'close', 'cloud_upload', 'delete',
   'description', 'edit', 'error', 'folder_open', 'home', 'hourglass_top', 'lock', 'logout', 'mail',
   'open_in_new', 'payments', 'person', 'progress_activity', 'schedule', 'send', 'upload', 'visibility',
   'visibility_off',

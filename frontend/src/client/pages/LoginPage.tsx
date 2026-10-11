@@ -12,13 +12,29 @@ import { bigButton, PasswordInput } from '../ui';
  * l'écran le dit, pour qu'un visiteur égaré sache à qui s'adresser.
  */
 export default function LoginPage({ expired, onLogin }: { expired: boolean; onLogin: () => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
+  /*
+    Champs lus dans le formulaire à l'envoi, et non suivis touche par
+    touche : un gestionnaire de mots de passe qui remplit les champs sans
+    prévenir la page est ainsi toujours pris en compte (audit du
+    10/10/2026). Le bouton reste actif et dit ce qui manque.
+  */
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const fields = event.currentTarget.elements;
+    const emailField = fields.namedItem('email') as HTMLInputElement;
+    const passwordField = fields.namedItem('password') as HTMLInputElement;
+    const email = emailField.value.trim();
+    const password = passwordField.value;
+
+    if (!email || !password) {
+      setError('Saisissez votre adresse email et votre mot de passe.');
+      (email ? passwordField : emailField).focus();
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -46,12 +62,11 @@ export default function LoginPage({ expired, onLogin }: { expired: boolean; onLo
           </label>
           <input
             id="client-email"
+            name="email"
             type="email"
             inputMode="email"
             autoComplete="username"
             required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
             className={inputClass}
           />
         </div>
@@ -61,23 +76,23 @@ export default function LoginPage({ expired, onLogin }: { expired: boolean; onLo
             <label htmlFor="client-password" className="text-sm font-semibold text-primary">
               Mot de passe
             </label>
+            {/* 44 px de haut au doigt, sans pousser le champ vers le bas (-my-3). */}
             <Link
               to="/espace-client/mot-de-passe-oublie"
-              className="text-sm font-semibold text-secondary-ink hover:underline"
+              className="-my-3 inline-flex min-h-11 items-center text-sm font-semibold text-secondary-ink hover:underline"
             >
               Mot de passe oublié ?
             </Link>
           </div>
           <PasswordInput
             id="client-password"
+            name="password"
             autoComplete="current-password"
             required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
           />
         </div>
 
-        <button type="submit" disabled={busy || !email || !password} className={`${bigButton.primary} w-full`}>
+        <button type="submit" disabled={busy} className={`${bigButton.primary} w-full`}>
           {busy && <ButtonSpinner />}
           Se connecter
         </button>

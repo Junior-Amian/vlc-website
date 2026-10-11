@@ -1,4 +1,5 @@
 import { API_BASE, ApiError, request } from '../lib/api';
+import { BACKGROUND_HEADERS } from '../lib/session';
 import type { ItemStatus, Message } from '../dossiers/types';
 import type {
   Admin,
@@ -79,7 +80,9 @@ export const adminApi = {
       `/admin/requests?${new URLSearchParams({ filter, q: query, page: String(page) }).toString()}`,
     ),
 
-  requestCounts: () => call<RequestCounts>('/admin/requests/summary'),
+  // `background` : rafraîchissement automatique, qui ne prolonge pas la session (lib/session.ts).
+  requestCounts: (background = false) =>
+    call<RequestCounts>('/admin/requests/summary', background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   /** Ouvrir une demande « nouvelle » la fait passer « en cours ». */
   contactRequest: (id: string) => call<ContactRequest>(`/admin/requests/${id}`),
@@ -109,10 +112,12 @@ export const adminApi = {
     call<DossierList>(`/admin/dossiers?${new URLSearchParams({ filter, q: query, step: String(step) }).toString()}`),
 
   /** Dossiers qui demandent l'attention de l'équipe : le badge du menu. */
-  dossierAlerts: () => call<{ attention: number }>('/admin/dossiers/alerts'),
+  dossierAlerts: (background = false) =>
+    call<{ attention: number }>('/admin/dossiers/alerts', background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   /** Le fil d'un dossier ; le lire le marque comme lu pour l'équipe. */
-  dossierMessages: (id: string) => call<Message[]>(`/admin/dossiers/${id}/messages`),
+  dossierMessages: (id: string, background = false) =>
+    call<Message[]>(`/admin/dossiers/${id}/messages`, background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   sendDossierMessage: (id: string, body: string) =>
     call<Message[]>(`/admin/dossiers/${id}/messages`, json('POST', { body })),

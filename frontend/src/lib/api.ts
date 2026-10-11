@@ -1,3 +1,5 @@
+import { markActivity } from './session';
+
 /**
  * Client HTTP de l'API PHP.
  *
@@ -69,6 +71,12 @@ export async function request<T>(path: string, init?: RequestInit): Promise<ApiS
       response.status,
       failure?.errors ?? {},
     );
+  }
+
+  // Une requête de l'utilisateur a prolongé la session côté API ; un
+  // rafraîchissement automatique (X-Background), non (voir lib/session.ts).
+  if (!new Headers(init?.headers).has('X-Background')) {
+    markActivity();
   }
 
   return payload;

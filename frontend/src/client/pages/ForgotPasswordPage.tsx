@@ -12,13 +12,26 @@ import { bigButton } from '../ui';
  * reçoit une nouvelle invitation.
  */
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
   const [sent, setSent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function submit(event: FormEvent) {
+  /*
+    Adresse lue dans le formulaire à l'envoi, comme sur l'écran de
+    connexion : le bouton reste actif et dit ce qui manque, plutôt que
+    d'être grisé sans explication.
+  */
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const field = event.currentTarget.elements.namedItem('email') as HTMLInputElement;
+    const email = field.value.trim();
+
+    if (!email) {
+      setError('Saisissez l\'adresse email de votre espace.');
+      field.focus();
+      return;
+    }
+
     setBusy(true);
     setError(null);
 
@@ -63,17 +76,16 @@ export default function ForgotPasswordPage() {
           </label>
           <input
             id="forgot-email"
+            name="email"
             type="email"
             inputMode="email"
             autoComplete="email"
             required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
             className={inputClass}
           />
         </div>
 
-        <button type="submit" disabled={busy || !email} className={`${bigButton.primary} w-full`}>
+        <button type="submit" disabled={busy} className={`${bigButton.primary} w-full`}>
           {busy && <ButtonSpinner />}
           Recevoir le lien
         </button>

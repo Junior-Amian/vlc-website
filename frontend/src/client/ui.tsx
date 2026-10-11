@@ -21,9 +21,9 @@ export const bigButton = {
 };
 
 /** Bloc de contenu : fond blanc, coins larges, ombre à peine perceptible. */
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function Card({ children, className = '', id }: { children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className={`rounded-3xl border border-surface-container bg-white p-5 shadow-ambient sm:p-6 ${className}`}>
+    <section id={id} className={`rounded-3xl border border-surface-container bg-white p-5 shadow-ambient sm:p-6 ${className}`}>
       {children}
     </section>
   );
@@ -33,7 +33,7 @@ export function Card({ children, className = '' }: { children: ReactNode; classN
 export function PageTitle({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <header className="flex flex-col gap-1.5">
-      <h1 className="text-2xl font-extrabold tracking-tight text-primary sm:text-3xl">{title}</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight text-primary outline-none sm:text-3xl">{title}</h1>
       {children && <p className="max-w-[60ch] text-sm leading-relaxed text-on-surface-variant sm:text-base">{children}</p>}
     </header>
   );

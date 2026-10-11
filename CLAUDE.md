@@ -45,7 +45,7 @@ Décisions prises avec le client, à ne pas remettre en cause sans le consulter 
 - **Espace client sur invitation** (`/espace-client`, priorité 1 livrée le
   03/10/2026) : l'équipe ouvre le dossier dans le panel, ce qui crée le compte du
   client et lui envoie un lien (7 jours) pour choisir son mot de passe. Session
-  par cookie HttpOnly `vlc_client` (14 jours), sur le modèle du panel — choix
+  par cookie HttpOnly `vlc_client` (20 minutes d'inactivité, voir « Durée des sessions »), sur le modèle du panel — choix
   retenu plutôt qu'un jeton Bearer, pour la même raison (XSS). Documents rangés
   dans `api/storage/documents/`, hors racine web, sous un nom aléatoire, servis
   uniquement à leur propriétaire et aux administrateurs.
@@ -55,7 +55,8 @@ api/         API PHP (MVC natif, sans dépendances)
   app/Content/   Schéma du contenu, validation, assemblage public
   app/Dossiers/  Espace client : étapes, questions d'ouverture, stockage des documents
   database/      schema.sql, seed.sql, migrations/, README d'exploitation du panel
-  bin/           create-admin.php (comptes du panel), admin-sql.php (requête pour phpMyAdmin)
+  bin/           create-admin.php (comptes du panel), admin-sql.php (requête pour phpMyAdmin),
+                 create-client.php (compte client de test, poste local seulement)
 frontend/    Application React (Vite + Tailwind 4)
   src/content/   Contenu du site : types, baseline.json, ContentProvider
   src/admin/     Panel d'administration (chargé à part, sur /admin seulement)
@@ -87,7 +88,8 @@ VITE_API_PROXY=http://127.0.0.1:8000 npm run dev   # dans frontend/
 ```
 
 Base locale : `visilion` (root sans mot de passe), compte du panel
-`admin@visilion.test`. GD n'est pas activé dans le PHP de XAMPP, et rien n'en dépend.
+`admin@visilion.test`, compte de l'espace client `client@visilion.com`,
+tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est pas activé dans le PHP de XAMPP, et rien n'en dépend.
 
 ## Conventions
 
@@ -100,6 +102,17 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
   `on-primary-soft` / `-variant` / `-muted`, jamais par `slate-*`. Petit texte
   ocre sur fond bleuté : `secondary-ink` (`secondary` y tombe à 4,32). Erreurs :
   `brand-red-ink` / `brand-red-soft`, pas les rouges par défaut de Tailwind.
+  Contour d'un champ de saisie : jeton `outline` (3,58:1, `inputClass`), jamais
+  une surface (`surface-container-high` n'en donne que 1,27, sous les 3:1 de
+  WCAG 1.4.11 ; audit Impeccable du 10/10/2026, note 15/20 avant corrections).
+- **Espace client, navigation** : changer de rubrique place le focus sur le
+  `<h1>` de la page (`ClientLayout`), et chaque écran a son titre d'onglet
+  (`<Head>` dans `ClientLayout`, `AuthFrame`, `OnboardingPage`). Une nouvelle
+  rubrique doit avoir un `<h1>` et une entrée dans `TABS`. Les formulaires
+  d'accès lisent leurs champs à l'envoi (pas de bouton grisé tant qu'ils
+  sont vides) : un remplissage automatique est toujours pris en compte.
+  Logo de l'en-tête et des écrans d'accès : `public/logo-96.jpeg` (3 Ko),
+  pas `logo.jpeg` (81 Ko).
 - **Cibles tactiles du panel** : 44 px au doigt, 40 px à la souris
   (`min-h-11 pointer-fine:min-h-10`). Le tiroir mobile rend `<main>` inerte
   (`inert`) tant qu'il est ouvert ; il se ferme de lui-même au passage en grand
@@ -159,9 +172,15 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
 - **Rien de `fixed` à l'intérieur de `<header>`** : son flou (`backdrop-filter`) en
   fait le bloc de référence des descendants `fixed`. Le menu mobile est donc rendu
   à côté de l'en-tête ; placé dedans, il était réduit à 49 px et invisible.
-- **Galerie des prestations** (`lib/useHorizontalPin.ts`) : épinglée aussi sur
-  mobile et tablette (mode `narrow`, une fiche pleine largeur par cran de
-  défilement, aimantée par des repères `scroll-snap`) dès que l'écran fait 640 px
+- **Galerie des prestations** (`lib/useHorizontalPin.ts`) : épinglée, elle
+  montre deux fiches sur grand écran et sur tablette, une seule au téléphone
+  (demande du 10/10/2026), et avance d'une fiche à la fois. La piste ne
+  s'arrête jamais entre deux fiches : elle passe à la suivante à mi-cran (des
+  repères `scroll-snap` posent en plus la page sur chaque cran). Le nombre de
+  fiches visibles découle de leur largeur (`CARD_STYLE` de `Services.tsx`, en
+  `cqw` de la fenêtre de la galerie, déclarée `@container`) ; le hook mesure
+  le pas, il ne le suppose pas. Épinglée aussi sur
+  mobile et tablette (mode `narrow`) dès que l'écran fait 640 px
   de haut et que la fiche y tient réellement (mesuré au montage ; sinon, retour à
   la galerie au doigt, comme sur 320 × 640). Sur mobile, le bloc collant se cale
   sous l'en-tête (`top-[72px]`, `sm:top-20`) : si la hauteur de l'en-tête change,
@@ -226,6 +245,39 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
   `api/app/Dossiers/Onboarding.php` (réponses en JSON dans `clients.profile` :
   aucune migration), adresse de l'équipe `MAIL_DOSSIERS_ADDRESS` (`.env`).
   Retirer une étape impose de renuméroter les dossiers qui s'y trouvent.
+  Seule question qui n'est pas provisoire : nom et prénoms du passeport
+  (`last_name`, `first_names`, demande du 10/10/2026), en tête de l'identité.
+  À l'enregistrement, ils remplacent le nom saisi par l'équipe à
+  l'ouverture du dossier (`clients.full_name`, via `Onboarding::fullName()`).
+- **Espace client sur grand écran** (refonte du 10/10/2026, structure
+  « barre latérale » choisie par l'utilisateur sur croquis) : rien ne change
+  au téléphone (en-tête léger, onglets en bas). À partir de `lg`, menu
+  latéral marine fixe de 17rem (`ClientLayout`, même vocabulaire que le
+  panel) : marque, rubriques avec pastilles, compte et déconnexion, rien
+  d'autre (le dossier et le conseiller y figuraient ; retirés à la demande
+  de l'utilisateur le 10/10/2026) ; contenu jusqu'à 88rem. Suivi : vignette
+  pleine largeur avec frise des étapes (remplace la liste « Avancement » dès
+  `lg`), puis l'action à mener et le point des paiements en trois cartes
+  (prix de la prestation, déjà payé, reste à payer en marine ; sur toutes
+  les tailles d'écran), en une seule colonne pleine largeur. La tuile
+  Documents n'existe plus que sous `lg`, où elle compte les documents
+  obligatoires joints (« x/x joints », au moins un fichier envoyé) et non
+  plus les pièces validées (demande du 11/10/2026). Retirés à la
+  demande de l'utilisateur (10/10/2026) : la liste « Pièces du dossier », la
+  tuile Messages (le bandeau « Nouveau message » reste) et la carte
+  « Une question ? » (WhatsApp, téléphone) sur tous les écrans ; son
+  composant `AdvisorCard` est supprimé. Le conseiller se joint par la
+  rubrique Messages. Les liens `?piece=` de la page Documents restent pris en charge.
+  Sous `lg` (téléphone, tablette), pas de bloc « À faire maintenant », et
+  la liste « Avancement » passe avant les paiements (demande du 10/10/2026). Documents à `xl` : liste
+  des pièces à gauche, pièce choisie à droite avec zone de dépôt
+  (glisser-déposer) ; sous `xl`, fiches empilées (`useMediaQuery`, seul cas
+  où deux structures différentes le justifient). Messages : fil sur toute la
+  hauteur de l'écran (`lg:h-[calc(100dvh-5.5rem)]`, à revoir si les marges
+  de `<main>` changent), dossier rappelé à droite à `xl`. Paiements :
+  tableau daté avec total. Profil : grille à `xl`, ordre de lecture du
+  téléphone conservé. Première connexion : deux colonnes dès `lg`, questions
+  deux par deux dès `sm`.
 - **Messages et lectures** : horodatés au millième (`DATETIME(3)`), comme
   `dossiers.client_read_at` / `team_read_at` ; un message est « non lu » s'il
   vient de l'autre partie et qu'il est plus récent que la dernière lecture.
@@ -252,6 +304,18 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
   `token_version` (`revokeSessions()`), seul moyen d'invalider un JWT avant
   son expiration. Un cookie volé ne survit donc pas à la déconnexion, mais
   se déconnecter sur le téléphone déconnecte aussi l'ordinateur.
+- **Durée des sessions : 20 minutes sans activité**, panel et espace client
+  (demande du 11/10/2026 ; avant : 8 h fixes et 14 jours). Le `TTL` de
+  `AdminSession` et `ClientSession` vaut 20 min, et chaque requête
+  authentifiée repose le cookie (`SessionCookie::refresh`, appelé par les
+  deux middlewares). **Un rafraîchissement automatique doit envoyer
+  `X-Background`** (`BACKGROUND_HEADERS`, `src/lib/session.ts`) : il ne
+  prolonge pas la session, sans quoi un onglet ouvert resterait connecté sans
+  fin. Côté navigateur, `useIdleSession` (même fichier, branché dans
+  `AdminApp` et `ClientApp`) ramène à la connexion après 20 min sans
+  requête de l'utilisateur, et une saisie ou un clic après 5 min sans requête
+  envoie un `me` pour ne pas couper quelqu'un en pleine saisie.
+  `SESSION_IDLE_MS` et les deux `TTL` doivent rester égaux.
 - **Liens d'accès de l'espace client** : l'équipe qui renvoie une invitation
   annule les précédentes ; « mot de passe oublié » sur un compte pas encore
   activé en ajoute une sans annuler celle de l'équipe. Choisir son mot de
@@ -350,9 +414,13 @@ Base locale : `visilion` (root sans mot de passe), compte du panel
 2. **Espace client, V2 du cahier des charges** (à lancer sur demande de
    l'utilisateur) : modèles de listes par visa et pays, rappels, SMS,
    historique, export, plusieurs dossiers par client, FAQ.
-3. **Lancement de l'espace client** : le bouton « Espace client » de l'en-tête
-   du site mène encore à la section d'annonce (`#espace-client`) ; le faire
-   pointer vers `/espace-client` le jour du lancement.
+
+**Espace client ouvert sur le site (10/10/2026)** : le bouton « Espace client »
+de l'en-tête et du menu mobile mène à `/espace-client`, et la section
+`#espace-client` (`ClientPortalCta.tsx`) le présente comme disponible, avec un
+bouton d'accès (champ `button` du contenu `portal`). Ne pas mettre le site en
+ligne avant l'API de production : ces liens mèneraient à une connexion qui
+ne répond pas.
 
 ## Points en suspens côté client
 

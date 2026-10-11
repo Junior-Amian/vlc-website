@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Head } from 'vite-react-ssg';
 import Icon from '../../components/ui/Icon';
 import { ButtonSpinner, LogoBar, Notice } from '../../components/ui/controls';
 import { ApiError } from '../../lib/api';
+import { formatFirstName } from '../../lib/format';
 import { clientApi } from '../api';
 import { useClient } from '../ClientContext';
 import OnboardingFields, { focusFirstError, missingFields } from '../OnboardingFields';
+import type { OnboardingForm } from '../types';
 import { bigButton } from '../ui';
 
 /**
@@ -24,7 +27,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const firstName = client.fullName.split(' ')[0] || client.fullName;
+  const firstName = formatFirstName(client.fullName);
 
   // Nouvelle étape : haut de page, et le titre reçoit le focus pour que les
   // lecteurs d'écran l'annoncent.
@@ -88,8 +91,11 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-dvh bg-surface">
+      <Head>
+        <title>{`${group ? group.title : 'Ouverture de votre dossier'} · Espace client | VISILION CORPORATE`}</title>
+      </Head>
       <header className="border-b border-surface-container bg-white pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between gap-4 px-4 sm:px-6 lg:max-w-5xl">
           <span className="flex flex-col gap-1">
             <span className="text-sm font-bold leading-none text-primary">Ouverture de votre dossier</span>
             <LogoBar className="h-[3px] w-14" />
@@ -101,7 +107,7 @@ export default function OnboardingPage() {
         </div>
 
         {group && (
-          <div className="mx-auto grid max-w-2xl gap-1.5 px-4 pb-3 sm:px-6" style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}>
+          <div className="mx-auto grid max-w-2xl gap-1.5 px-4 pb-3 sm:px-6 lg:max-w-5xl" style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}>
             {groups.map((candidate, index) => (
               <span
                 key={candidate.number}
@@ -113,7 +119,18 @@ export default function OnboardingPage() {
         )}
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-8 sm:px-6 sm:pb-16">
+      <main className="mx-auto max-w-2xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-8 sm:px-6 sm:pb-16 lg:grid lg:max-w-5xl lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:gap-12 lg:pt-12">
+        {/*
+          Grand écran : le dossier et les étapes restent à gauche, en repère,
+          pendant que le formulaire occupe la colonne de droite. Au
+          téléphone, la page d'accueil les montre une fois, au-dessus du
+          bouton « Commencer ».
+        */}
+        <aside className="hidden lg:sticky lg:top-8 lg:flex lg:flex-col lg:gap-4">
+          {dossier && <DossierSummary reference={dossier.reference} service={dossier.service.label} country={dossier.country} />}
+          <StageList groups={groups} stage={stage} />
+        </aside>
+
         {!group ? (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
@@ -125,36 +142,12 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            {dossier && (
-              <div className="flex items-center gap-4 rounded-3xl bg-primary p-5 text-white">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-brand-yellow">
-                  <Icon name="description" size={24} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs uppercase tracking-[0.16em] text-on-primary-muted">Dossier {dossier.reference}</p>
-                  <p className="font-bold">
-                    {dossier.service.label}
-                    {dossier.country && <span className="font-normal text-on-primary-soft"> · {dossier.country}</span>}
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="flex flex-col gap-6 lg:hidden">
+              {dossier && <DossierSummary reference={dossier.reference} service={dossier.service.label} country={dossier.country} />}
+              <StageList groups={groups} stage={stage} />
+            </div>
 
-            <ol className="flex flex-col gap-3">
-              {groups.map((candidate) => (
-                <li key={candidate.number} className="flex items-start gap-3 rounded-2xl border border-surface-container bg-white px-4 py-3.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-sm font-bold text-primary">
-                    {candidate.number}
-                  </span>
-                  <span className="flex flex-col">
-                    <span className="text-sm font-semibold text-primary">{candidate.title}</span>
-                    <span className="text-sm text-on-surface-variant">{candidate.description}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-
-            <StickyActions>
+            <StickyActions start>
               <button type="button" onClick={() => setStage(0)} className={`${bigButton.primary} w-full sm:w-auto`}>
                 Commencer
                 <Icon name="arrow_forward" size={20} />
@@ -196,14 +189,74 @@ export default function OnboardingPage() {
   );
 }
 
+/** Le dossier ouvert par l'équipe, rappelé tout au long du formulaire. */
+function DossierSummary({ reference, service, country }: { reference: string; service: string; country: string }) {
+  return (
+    <div className="flex items-center gap-4 rounded-3xl bg-primary p-5 text-white">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-brand-yellow">
+        <Icon name="description" size={24} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs uppercase tracking-[0.16em] text-on-primary-muted">Dossier {reference}</p>
+        <p className="font-bold">
+          {service}
+          {country && <span className="font-normal text-on-primary-soft"> · {country}</span>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Les étapes du formulaire. Sur la page d'accueil (`stage` à -1), une simple
+ * annonce ; dans la colonne du grand écran, elle montre aussi où l'on en est :
+ * étape faite cochée, étape en cours en ocre.
+ */
+function StageList({ groups, stage }: { groups: OnboardingForm['groups']; stage: number }) {
+  return (
+    <ol className="flex flex-col gap-3">
+      {groups.map((candidate, index) => {
+        const done = index < stage;
+        const current = index === stage;
+
+        return (
+          <li
+            key={candidate.number}
+            aria-current={current ? 'step' : undefined}
+            className={`flex items-start gap-3 rounded-2xl border bg-white px-4 py-3.5 ${current ? 'border-secondary' : 'border-surface-container'}`}
+          >
+            <span
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                done ? 'bg-primary text-white' : current ? 'bg-secondary text-white' : 'bg-surface-container-low text-primary'
+              }`}
+            >
+              {done ? <Icon name="check" size={16} /> : candidate.number}
+            </span>
+            <span className="flex flex-col">
+              <span className="text-sm font-semibold text-primary">{candidate.title}</span>
+              <span className="text-sm text-on-surface-variant">{candidate.description}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /**
  * Boutons de l'étape : collés en bas de l'écran au téléphone, à portée de
  * pouce et toujours visibles, même clavier fermé ; à leur place en dessous
  * du formulaire sur grand écran.
  */
-function StickyActions({ children }: { children: ReactNode }) {
+function StickyActions({ children, start = false }: { children: ReactNode; start?: boolean }) {
+  // `start` : sur l'accueil, le bouton suit le texte au lieu de partir au
+  // bout de la colonne, large sur grand écran.
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-surface-container bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md sm:static sm:justify-end sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+    <div
+      className={`fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-surface-container bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur-md sm:static sm:justify-end sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none ${
+        start ? 'lg:justify-start' : ''
+      }`}
+    >
       {children}
     </div>
   );

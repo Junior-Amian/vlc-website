@@ -13,6 +13,9 @@ final class AdminSession extends SessionCookie
 
     protected const ROLE = 'admin';
 
-    /** Une journée de travail, sans prolongation. */
-    protected const TTL = 8 * 3600;
+    /**
+     * 20 minutes sans activité (demande du 11/10/2026 ; 8 heures fixes
+     * auparavant). Chaque action la prolonge (SessionCookie::refresh).
+     */
+    protected const TTL = 20 * 60;
 }

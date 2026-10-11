@@ -131,8 +131,12 @@ export function MessageComposer({
  * Charge le fil, puis le rafraîchit toutes les 30 secondes tant que la page
  * est visible : une réponse arrive sans recharger. Chaque lecture marque le
  * fil comme lu côté serveur.
+ *
+ * `load(background)` : `true` pour les relectures automatiques, que l'API ne
+ * compte pas comme une activité (la session n'est pas prolongée, voir
+ * lib/session.ts) ; `false` pour la première lecture, faite à l'ouverture.
  */
-export function useMessages(load: () => Promise<Message[]>) {
+export function useMessages(load: (background: boolean) => Promise<Message[]>) {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const loadRef = useRef(load);
@@ -141,9 +145,9 @@ export function useMessages(load: () => Promise<Message[]>) {
   useEffect(() => {
     let cancelled = false;
 
-    const refresh = () =>
+    const refresh = (background: boolean) =>
       loadRef
-        .current()
+        .current(background)
         .then((list) => {
           if (!cancelled) {
             setMessages(list);
@@ -156,11 +160,11 @@ export function useMessages(load: () => Promise<Message[]>) {
           }
         });
 
-    refresh();
+    refresh(false);
 
     const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
-        refresh();
+        refresh(true);
       }
     }, REFRESH_MS);
 

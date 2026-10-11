@@ -22,6 +22,24 @@ export function formatLongDate(value: string): string {
     : date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Abidjan' });
 }
 
+/**
+ * Prénom pour saluer : le premier mot du nom (« Prénoms NOM » depuis le
+ * formulaire d'ouverture). Saisi tout en capitales, il est remis en casse
+ * ordinaire (« JACOB » → « Jacob », « MARIE-PAULE » → « Marie-Paule ») ;
+ * sinon, il est laissé tel que le client l'a écrit.
+ */
+export function formatFirstName(fullName: string): string {
+  const first = fullName.trim().split(/\s+/)[0] ?? '';
+
+  if (first === '' || first !== first.toLocaleUpperCase('fr-FR')) {
+    return first || fullName;
+  }
+
+  return first
+    .toLocaleLowerCase('fr-FR')
+    .replace(/(^|[-'’])(\p{L})/gu, (_match, separator: string, letter: string) => separator + letter.toLocaleUpperCase('fr-FR'));
+}
+
 export function formatPercent(ratio: number): string {
   return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: ratio < 0.1 ? 1 : 0 }).format(ratio * 100)} %`;
 }

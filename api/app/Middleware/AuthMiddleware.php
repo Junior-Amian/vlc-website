@@ -39,6 +39,7 @@ final class AuthMiddleware implements Middleware
 
         $request->setAttribute('client', $client);
 
-        return $next($request);
+        // Chaque action repousse la fin de la session (voir SessionCookie::refresh).
+        return ClientSession::refresh($request, $next($request), $client);
     }
 }

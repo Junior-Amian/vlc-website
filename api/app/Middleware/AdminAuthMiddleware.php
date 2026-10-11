@@ -33,6 +33,7 @@ final class AdminAuthMiddleware implements Middleware
 
         $request->setAttribute('admin', $admin);
 
-        return $next($request);
+        // Chaque action repousse la fin de la session (voir SessionCookie::refresh).
+        return AdminSession::refresh($request, $next($request), $admin);
     }
 }

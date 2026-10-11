@@ -11,9 +11,9 @@ import { Notice, Panel, Spinner } from '../ui';
  */
 export default function MessagesPanel({ dossier }: { dossier: AdminDossier }) {
   const { refreshDossierAlerts } = useAdmin();
-  const { messages, setMessages, error } = useMessages(async () => {
-    const response = await adminApi.dossierMessages(dossier.id);
-    refreshDossierAlerts();
+  const { messages, setMessages, error } = useMessages(async (background) => {
+    const response = await adminApi.dossierMessages(dossier.id, background);
+    refreshDossierAlerts(background);
 
     return response.data ?? [];
   });

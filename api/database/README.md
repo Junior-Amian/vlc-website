@@ -185,6 +185,24 @@ d'ouverture) se changent chacun en un seul endroit : `app/Dossiers/Process.php`
 et `app/Dossiers/Onboarding.php`. L'espace client et le panel les lisent par
 l'API.
 
+**Compte client de test (poste local seulement)** : `bin/create-client.php`
+crée un compte déjà activé, avec un dossier à l'étape 1 et les pièces par
+défaut, sans passer par l'invitation. Relancé sur un compte existant, il en
+remplace le mot de passe. Il refuse de tourner si `APP_ENV` n'est pas `local`
+ou `development`.
+
+```bash
+cd api
+php bin/create-client.php client@visilion.com "admin" "Client de test"
+```
+
+Le compte local `client@visilion.com` a été créé ainsi le 10/10/2026. Son mot
+de passe de test est `admin`, comme celui du compte local du panel
+`admin@visilion.test` (choix de l'utilisateur, 10/10/2026). Le script
+n'impose aucune longueur : l'écran « Choisir mon mot de passe » de l'espace
+client, lui, garde ses 8 caractères. Le formulaire d'ouverture s'affiche à la
+première connexion du client, comme pour un vrai client.
+
 ## 8. Recompiler le site
 
 Une modification du panel est en ligne dès son enregistrement, sans

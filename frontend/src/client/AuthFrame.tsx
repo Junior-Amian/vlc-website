@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Head } from 'vite-react-ssg';
 import Icon from '../components/ui/Icon';
 import { LogoBar } from '../components/ui/controls';
 import { asset } from '../lib/asset';
@@ -20,10 +21,14 @@ const PROMISES = [
 export default function AuthFrame({ title, intro, children }: { title: string; intro?: ReactNode; children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-surface lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <Head>
+        <title>{`${title} · Espace client | VISILION CORPORATE`}</title>
+      </Head>
+
       <aside className="relative overflow-hidden bg-primary px-5 pb-16 pt-[max(1.5rem,env(safe-area-inset-top))] text-white sm:px-8 lg:flex lg:flex-col lg:justify-between lg:px-12 lg:py-12">
         <a href={asset('/')} className="inline-flex items-center gap-3 rounded-xl">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white p-1">
-            <img src={asset('/logo.jpeg')} alt="" width={40} height={40} className="h-full w-full object-contain" />
+            <img src={asset('/logo-96.jpeg')} alt="" width={40} height={40} className="h-full w-full object-contain" />
           </span>
           <span>
             <span className="block text-[0.9375rem] font-bold leading-tight">VISILION CORPORATE</span>

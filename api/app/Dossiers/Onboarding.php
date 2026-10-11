@@ -36,6 +36,29 @@ final class Onboarding
 
     /** @var array<int, array<string, mixed>> */
     public const FIELDS = [
+        // Nom et prénoms tels que sur le passeport : ils remplacent le nom
+        // saisi par l'équipe à l'ouverture du dossier (voir fullName()).
+        // 50 + 60 caractères, plus l'espace : clients.full_name en tient 120.
+        [
+            'key'          => 'last_name',
+            'group'        => 1,
+            'type'         => 'string',
+            'label'        => 'Nom',
+            'required'     => true,
+            'max'          => 50,
+            'uppercase'    => true,
+            'autocomplete' => 'family-name',
+        ],
+        [
+            'key'          => 'first_names',
+            'group'        => 1,
+            'type'         => 'string',
+            'label'        => 'Prénoms',
+            'required'     => true,
+            'max'          => 60,
+            'help'         => 'Tous vos prénoms, dans l\'ordre du passeport.',
+            'autocomplete' => 'given-name',
+        ],
         ['key' => 'birth_date', 'group' => 1, 'type' => 'date', 'label' => 'Date de naissance', 'required' => true],
         ['key' => 'birth_place', 'group' => 1, 'type' => 'string', 'label' => 'Lieu de naissance', 'required' => true, 'max' => 120],
         ['key' => 'nationality', 'group' => 1, 'type' => 'string', 'label' => 'Nationalité', 'required' => true, 'max' => 80],
@@ -65,6 +88,20 @@ final class Onboarding
         ['key' => 'occupation', 'group' => 2, 'type' => 'string', 'label' => 'Profession', 'required' => true, 'max' => 120, 'help' => 'Ou « étudiant », « sans emploi ».'],
         ['key' => 'city', 'group' => 2, 'type' => 'string', 'label' => 'Ville de résidence', 'required' => true, 'max' => 80, 'autocomplete' => 'address-level2'],
     ];
+
+    /**
+     * Nom complet tiré des réponses (« Prénoms NOM »), qui devient le nom du
+     * compte ; null si l'une des deux réponses manque.
+     *
+     * @param array<string, string> $answers
+     */
+    public static function fullName(array $answers): ?string
+    {
+        $first = $answers['first_names'] ?? '';
+        $last = $answers['last_name'] ?? '';
+
+        return $first !== '' && $last !== '' ? $first . ' ' . $last : null;
+    }
 
     /** Le formulaire, tel que l'espace client l'affiche. @return array<string, mixed> */
     public static function form(): array

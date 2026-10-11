@@ -1,4 +1,5 @@
 import { API_BASE, ApiError, request, type ApiFailure, type ApiSuccess } from '../lib/api';
+import { BACKGROUND_HEADERS, markActivity } from '../lib/session';
 import type { Message } from '../dossiers/types';
 import type { AccessInfo, Client, ClientState } from './types';
 
@@ -48,8 +49,11 @@ export const clientApi = {
 
   deleteDocument: (id: string) => call<ClientState>(`/client/documents/${id}`, { method: 'DELETE' }),
 
-  /** Le fil de messages ; le lire le marque comme lu. */
-  messages: () => call<Message[]>('/client/messages'),
+  /**
+   * Le fil de messages ; le lire le marque comme lu. `background` : relecture
+   * automatique, qui ne prolonge pas la session (lib/session.ts).
+   */
+  messages: (background = false) => call<Message[]>('/client/messages', background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   sendMessage: (body: string) => call<Message[]>('/client/messages', json('POST', { body })),
 };
@@ -99,6 +103,8 @@ export function uploadDocument(
       }
 
       if (xhr.status >= 200 && xhr.status < 300 && payload?.success) {
+        // Un envoi prolonge la session comme toute autre action (lib/session.ts).
+        markActivity();
         resolve(payload);
         return;
       }

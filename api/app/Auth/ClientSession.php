@@ -7,9 +7,10 @@ namespace App\Auth;
 /**
  * Session de l'espace client (voir SessionCookie).
  *
- * Plus longue que celle du panel : le client consulte son dossier de loin en
- * loin, le plus souvent depuis son téléphone, et ne doit pas retaper son mot
- * de passe à chaque visite. Un changement de mot de passe la ferme partout.
+ * 20 minutes sans activité, comme le panel (demande du 11/10/2026 : 14 jours
+ * laissaient un dossier ouvert sur un ordinateur partagé). Chaque action la
+ * prolonge (SessionCookie::refresh). Un changement de mot de passe la ferme
+ * partout.
  */
 final class ClientSession extends SessionCookie
 {
@@ -17,5 +18,5 @@ final class ClientSession extends SessionCookie
 
     protected const ROLE = 'client';
 
-    protected const TTL = 14 * 24 * 3600;
+    protected const TTL = 20 * 60;
 }

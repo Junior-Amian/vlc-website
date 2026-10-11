@@ -42,10 +42,20 @@ final class DossierController extends Controller
         $clients = new Client();
         $firstTime = $client['onboarded_at'] === null;
 
-        $clients->update((string) $client['id'], [
+        $changes = [
             'profile'      => json_encode($answers, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
             'onboarded_at' => $client['onboarded_at'] ?? date('Y-m-d H:i:s'),
-        ]);
+        ];
+
+        // Le nom du passeport l'emporte sur celui saisi par l'équipe à
+        // l'ouverture du dossier : c'est lui que la demande de visa portera.
+        $fullName = Onboarding::fullName($answers);
+
+        if ($fullName !== null) {
+            $changes['full_name'] = $fullName;
+        }
+
+        $clients->update((string) $client['id'], $changes);
 
         $dossiers = new Dossier();
         $dossier = $dossiers->findForClient((string) $client['id']);

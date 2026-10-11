@@ -132,6 +132,18 @@ final class Response
         return $this;
     }
 
+    /** La réponse pose-t-elle déjà ce cookie ? (voir SessionCookie::refresh) */
+    public function hasCookie(string $name): bool
+    {
+        foreach ($this->cookies as $cookie) {
+            if ($cookie['name'] === $name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function status(): int
     {
         return $this->status;
