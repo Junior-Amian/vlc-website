@@ -1,4 +1,4 @@
-import { API_BASE, ApiError, request, type ApiFailure, type ApiSuccess } from '../lib/api';
+import { API_BASE, ApiError, isUuid, pathId, request, type ApiFailure, type ApiSuccess } from '../lib/api';
 import { BACKGROUND_HEADERS, markActivity } from '../lib/session';
 import type { Message } from '../dossiers/types';
 import type { AccessInfo, Client, ClientState } from './types';
@@ -47,7 +47,7 @@ export const clientApi = {
 
   saveProfile: (answers: Record<string, string>) => call<ClientState>('/client/me/profile', json('PUT', { answers })),
 
-  deleteDocument: (id: string) => call<ClientState>(`/client/documents/${id}`, { method: 'DELETE' }),
+  deleteDocument: async (id: string) => call<ClientState>(`/client/documents/${pathId(id)}`, { method: 'DELETE' }),
 
   /**
    * Le fil de messages ; le lire le marque comme lu. `background` : relecture
@@ -60,7 +60,7 @@ export const clientApi = {
 
 /** Adresse d'un document, à ouvrir dans un nouvel onglet ou à télécharger. */
 export function documentUrl(id: string): string {
-  return `${API_BASE}/client/documents/${id}`;
+  return isUuid(id) ? `${API_BASE}/client/documents/${id}` : '#';
 }
 
 /**
@@ -82,7 +82,8 @@ export function uploadDocument(
     form.append('file', file);
 
     // Même domaine : le cookie de session part de lui-même.
-    xhr.open('POST', `${API_BASE}/client/items/${itemId}/documents`);
+    // Une erreur levée ici rejette la promesse (pathId, lib/api.ts).
+    xhr.open('POST', `${API_BASE}/client/items/${pathId(itemId)}/documents`);
     xhr.setRequestHeader('Accept', 'application/json');
     // Exigé par l'API pour toute modification (CsrfMiddleware).
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');

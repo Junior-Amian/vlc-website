@@ -233,6 +233,14 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   `ClientApp`). Une page ne teste jamais elle-même le 401 : elle affiche
   `errorMessage(caught, repli)`. Dates, nombres et poids se mettent en forme dans
   `src/lib/format.ts`, jamais dans un composant.
+- **Identifiant dans une adresse de l'API : toujours `pathId(id)`**
+  (`src/lib/api.ts`), dans une fonction `async` pour que le refus arrive en
+  promesse rejetée ; pour un lien (`href`), `isUuid(id)`. React Router décode
+  l'adresse de la page : un identifiant « ..\documents\… » aurait fait appeler
+  au panel une autre route avec la session de l'administrateur (audit du
+  22/10/2026). Pour la même raison, `request()` ne lit que les réponses
+  `application/json` : un document déposé par un client ne passe jamais pour
+  une réponse de l'API.
 - **Espace client : tout part du client connecté.** `AuthMiddleware` (conservé
   pour ce chantier, désormais par cookie) pose `$request->attribute('client')` ;
   les contrôleurs `Controllers/Client/*` ne cherchent un dossier, une pièce ou un
@@ -300,6 +308,10 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   En plus, `App\Auth\LoginThrottle` bloque un compte 15 min après 10 échecs
   de connexion, quelle que soit l'IP, compté sur l'email saisi (qu'un compte
   existe ou non) ; pendant le blocage, même le bon mot de passe est refusé.
+  Les deux compteurs se lisent et s'écrivent sous un seul verrou
+  (`App\Core\LockedFile`), et `LoginThrottle::attempt()` compte la
+  tentative **avant** `password_verify` (une connexion réussie l'efface) :
+  avant l'audit du 22/10/2026, 20 requêtes simultanées passaient toutes.
 - **Déconnexion = toutes les sessions du compte** : elle incrémente
   `token_version` (`revokeSessions()`), seul moyen d'invalider un JWT avant
   son expiration. Un cookie volé ne survit donc pas à la déconnexion, mais
@@ -327,7 +339,12 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   `npm run build`) à la place des marqueurs `__CSP_…__` : ne jamais les
   retirer, la compilation échouerait. Toute nouvelle origine externe
   (police, image, script, API) doit être ajoutée à la CSP, sinon le
-  navigateur la bloque sans erreur de compilation. HSTS va de pair avec la
+  navigateur la bloque sans erreur de compilation. Comme toute empreinte
+  trouvée est admise, un texte du panel qui refermerait une balise
+  `<script>` du HTML pré-rendu ferait admettre son propre script : le
+  JSON-LD passe donc par `serializeJsonLd` (`Seo.tsx`, qui échappe `<`, `>`,
+  `&`), et `csp.mjs` fait échouer la compilation si un bloc JSON-LD n'est
+  plus du JSON valide. HSTS va de pair avec la
   redirection HTTPS : à commenter avec elle tant que le SSL n'est pas actif.
   Vérifié le 06/10/2026 dans Chrome derrière Apache (XAMPP, port à part) :
   aucune violation sur le site, le panel et l'espace client, connectés ou non.

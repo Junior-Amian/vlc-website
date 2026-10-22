@@ -10,6 +10,22 @@ type SeoProps = {
 };
 
 /**
+ * JSON-LD sûr à placer dans un <script>.
+ *
+ * Le pré-rendu recopie le contenu du script tel quel dans le HTML : un texte
+ * du panel contenant « </script> » refermerait la balise, et le script
+ * suivant serait admis par la CSP calculée au build (audit de sécurité du
+ * 22/10/2026). Remplacer <, > et & par leur échappement
+ * Unicode garde un JSON identique pour les moteurs.
+ */
+function serializeJsonLd(data: Record<string, unknown>): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}
+
+/**
  * Balises <head> par page.
  *
  * `Head` de vite-react-ssg les inscrit réellement dans le HTML généré au
@@ -38,7 +54,7 @@ export default function Seo({ title, description, path, jsonLd }: SeoProps) {
       <meta name="twitter:description" content={description} />
 
       {jsonLd && (
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{serializeJsonLd(jsonLd)}</script>
       )}
     </Head>
   );

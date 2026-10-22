@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
+use App\Core\LockedFile;
 use App\Core\Response;
 
 /**
@@ -19,6 +20,11 @@ use App\Core\Response;
  * Le compteur porte sur l'email saisi, qu'un compte existe ou non : le
  * blocage ne révèle donc pas quelles adresses sont enregistrées.
  *
+ * Chaque tentative est comptée d'avance, sous verrou, avant la vérification
+ * du mot de passe (attempt()) ; une connexion réussie remet le compteur à
+ * zéro (clear()). Compter l'échec après coup laissait passer une rafale de
+ * requêtes simultanées pendant le calcul bcrypt (audit du 22/10/2026).
+ *
  * Stocké sur disque (storage/cache/login), comme la limitation de débit :
  * le mutualisé n'offre ni Redis ni Memcached.
  */
@@ -28,16 +34,38 @@ final class LoginThrottle
 
     private const WINDOW_SECONDS = 900;
 
-    /** Secondes avant de pouvoir réessayer, ou null si la connexion est permise. */
-    public static function retryAfter(string $scope, string $email): ?int
+    /**
+     * Réserve une tentative de connexion.
+     *
+     * @return int|null null si la tentative est permise (elle est alors déjà
+     *                  comptée comme un échec), sinon les secondes avant de
+     *                  pouvoir réessayer.
+     */
+    public static function attempt(string $scope, string $email): ?int
     {
-        $failures = self::failures(self::file($scope, $email));
+        $file = self::file($scope, $email);
 
-        if (count($failures) < self::MAX_FAILURES) {
+        if ($file === null) {
             return null;
         }
 
-        return max(1, min($failures) + self::WINDOW_SECONDS - time());
+        $now = time();
+
+        $retryAfter = LockedFile::update($file, static function (string $contents) use ($now): array {
+            $failures = self::recent($contents, $now);
+
+            if (count($failures) >= self::MAX_FAILURES) {
+                return [max(1, min($failures) + self::WINDOW_SECONDS - $now), null];
+            }
+
+            $failures[] = $now;
+
+            return [null, (string) json_encode($failures)];
+        });
+
+        self::purgeExpired(dirname($file));
+
+        return $retryAfter;
     }
 
     /** Réponse des deux espaces quand un compte est bloqué. */
@@ -49,39 +77,21 @@ final class LoginThrottle
         )->withHeader('Retry-After', (string) $retryAfter);
     }
 
-    public static function recordFailure(string $scope, string $email): void
-    {
-        $file = self::file($scope, $email);
-
-        if ($file === null) {
-            return;
-        }
-
-        $failures = self::failures($file);
-        $failures[] = time();
-
-        @file_put_contents($file, json_encode(array_values($failures)), LOCK_EX);
-        self::purgeExpired(dirname($file));
-    }
-
+    /** Après une connexion réussie : la tentative réservée et les échecs passés s'effacent. */
     public static function clear(string $scope, string $email): void
     {
         $file = self::file($scope, $email);
 
         if ($file !== null && is_file($file)) {
-            @unlink($file);
+            LockedFile::update($file, static fn (): array => [null, '']);
         }
     }
 
     /** @return int[] Horodatages des échecs encore dans la fenêtre. */
-    private static function failures(?string $file): array
+    private static function recent(string $contents, int $now): array
     {
-        if ($file === null || !is_file($file)) {
-            return [];
-        }
-
-        $decoded = json_decode((string) file_get_contents($file), true);
-        $since = time() - self::WINDOW_SECONDS;
+        $decoded = json_decode($contents, true);
+        $since = $now - self::WINDOW_SECONDS;
 
         return is_array($decoded)
             ? array_values(array_filter($decoded, static fn ($ts): bool => is_int($ts) && $ts > $since))

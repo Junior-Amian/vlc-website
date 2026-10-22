@@ -12,6 +12,8 @@
 
   La compilation échoue si .htaccess ne porte plus les marqueurs : mieux
   vaut un échec visible qu'un site en ligne dont la CSP bloque les scripts.
+  Elle échoue aussi si un bloc JSON-LD n'est plus du JSON valide (voir
+  plus bas).
 */
 import { createHash } from 'node:crypto';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
@@ -48,6 +50,20 @@ for (const file of await htmlFiles(dist)) {
     if (/\bsrc\s*=/i.test(attributes)) continue;
 
     const type = /\btype\s*=\s*["']?([^"'\s>]*)/i.exec(attributes)?.[1] ?? '';
+
+    // Un bloc JSON-LD tronqué signale un texte du contenu qui a refermé la
+    // balise : le script qui suit serait admis ci-dessous par son empreinte.
+    // Seo.tsx l'empêche ; on refuse quand même de publier une telle page.
+    if (/^application\/ld\+json$/i.test(type)) {
+      try {
+        JSON.parse(body);
+      } catch {
+        console.error(`JSON-LD invalide dans ${path.relative(dist, file)} : une balise <script> a pu être refermée par le contenu.`);
+        process.exit(1);
+      }
+
+      continue;
+    }
 
     if (!EXECUTABLE.test(type)) continue;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
+use App\Core\LockedFile;
 use App\Core\Middleware;
 use App\Core\Request;
 use App\Core\Response;
@@ -34,7 +35,9 @@ class RateLimitMiddleware implements Middleware
 
         $directory = BASE_PATH . '/storage/cache/ratelimit';
 
-        if (!is_dir($directory) && !mkdir($directory, 0750, true) && !is_dir($directory)) {
+        // « @ » : deux premières requêtes simultanées créent le dossier en même
+        // temps ; l'avertissement de la seconde deviendrait une erreur 500.
+        if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory)) {
             // Si le stockage est indisponible on laisse passer plutôt que de
             // bloquer tout le formulaire de contact.
             return $next($request);
@@ -45,31 +48,32 @@ class RateLimitMiddleware implements Middleware
         $key = hash('sha256', $request->ip . '|' . $request->path);
         $file = $directory . '/' . $key . '.json';
         $now = time();
+        $window = static::WINDOW_SECONDS;
+        $max = static::MAX_ATTEMPTS;
 
-        $timestamps = [];
+        // Lecture, contrôle et ajout sous un même verrou : des requêtes
+        // simultanées ne peuvent pas toutes passer sur le même compte.
+        $retryAfter = LockedFile::update($file, static function (string $contents) use ($now, $window, $max): array {
+            $decoded = json_decode($contents, true);
+            $timestamps = is_array($decoded)
+                ? array_values(array_filter($decoded, static fn ($ts): bool => is_int($ts) && $ts > $now - $window))
+                : [];
 
-        if (is_file($file)) {
-            $decoded = json_decode((string) file_get_contents($file), true);
-
-            if (is_array($decoded)) {
-                $timestamps = array_filter(
-                    $decoded,
-                    static fn ($ts): bool => is_int($ts) && ($ts > $now - static::WINDOW_SECONDS)
-                );
+            if (count($timestamps) >= $max) {
+                return [max(1, (int) min($timestamps) + $window - $now), null];
             }
-        }
 
-        if (count($timestamps) >= static::MAX_ATTEMPTS) {
-            $retryAfter = (int) min($timestamps) + static::WINDOW_SECONDS - $now;
+            $timestamps[] = $now;
 
+            return [null, (string) json_encode($timestamps)];
+        });
+
+        if ($retryAfter !== null) {
             return Response::error(
                 'Trop de demandes envoyées. Merci de réessayer dans quelques minutes.',
                 429
-            )->withHeader('Retry-After', (string) max(1, $retryAfter));
+            )->withHeader('Retry-After', (string) $retryAfter);
         }
-
-        $timestamps[] = $now;
-        @file_put_contents($file, json_encode(array_values($timestamps)), LOCK_EX);
 
         return $next($request);
     }

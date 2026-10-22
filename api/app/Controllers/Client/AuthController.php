@@ -41,7 +41,7 @@ final class AuthController extends Controller
         $email = (string) $data['email'];
 
         // Avant le mot de passe : voir Admin\AuthController::login.
-        $retryAfter = LoginThrottle::retryAfter(self::THROTTLE, $email);
+        $retryAfter = LoginThrottle::attempt(self::THROTTLE, $email);
 
         if ($retryAfter !== null) {
             return LoginThrottle::response($retryAfter);
@@ -55,8 +55,6 @@ final class AuthController extends Controller
         $hash = $client['password_hash'] ?? '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
 
         if (!password_verify((string) $data['password'], (string) $hash) || $client === null || !Client::isActive($client)) {
-            LoginThrottle::recordFailure(self::THROTTLE, $email);
-
             return Response::error('Email ou mot de passe incorrect.', 401);
         }
 

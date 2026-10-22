@@ -1,4 +1,4 @@
-import { API_BASE, ApiError, request } from '../lib/api';
+import { API_BASE, ApiError, isUuid, pathId, request } from '../lib/api';
 import { BACKGROUND_HEADERS } from '../lib/session';
 import type { ItemStatus, Message } from '../dossiers/types';
 import type {
@@ -27,6 +27,9 @@ import type {
   Une réponse 401 (session expirée) est traitée ici, une fois pour tout le
   panel : le gestionnaire enregistré par AdminApp renvoie vers la connexion.
   Les pages n'ont donc qu'à afficher le message des autres erreurs.
+
+  Tout identifiant placé dans une adresse passe par pathId (lib/api.ts),
+  qu'il vienne de l'adresse de la page ou d'une réponse de l'API.
 */
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -85,12 +88,12 @@ export const adminApi = {
     call<RequestCounts>('/admin/requests/summary', background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   /** Ouvrir une demande « nouvelle » la fait passer « en cours ». */
-  contactRequest: (id: string) => call<ContactRequest>(`/admin/requests/${id}`),
+  contactRequest: async (id: string) => call<ContactRequest>(`/admin/requests/${pathId(id)}`),
 
-  updateRequest: (id: string, changes: { status?: RequestStatus; note?: string }) =>
-    call<ContactRequest>(`/admin/requests/${id}`, json('PATCH', changes)),
+  updateRequest: async (id: string, changes: { status?: RequestStatus; note?: string }) =>
+    call<ContactRequest>(`/admin/requests/${pathId(id)}`, json('PATCH', changes)),
 
-  deleteRequest: (id: string) => call<null>(`/admin/requests/${id}`, { method: 'DELETE' }),
+  deleteRequest: async (id: string) => call<null>(`/admin/requests/${pathId(id)}`, { method: 'DELETE' }),
 
   schema: () => call<Schema>('/admin/schema'),
 
@@ -103,9 +106,9 @@ export const adminApi = {
 
   uploadMedia: (form: FormData) => call<MediaItem>('/admin/media', { method: 'POST', body: form }),
 
-  updateMedia: (id: string, alt: string) => call<MediaItem>(`/admin/media/${id}`, json('PATCH', { alt })),
+  updateMedia: async (id: string, alt: string) => call<MediaItem>(`/admin/media/${pathId(id)}`, json('PATCH', { alt })),
 
-  deleteMedia: (id: string) => call<null>(`/admin/media/${id}`, { method: 'DELETE' }),
+  deleteMedia: async (id: string) => call<null>(`/admin/media/${pathId(id)}`, { method: 'DELETE' }),
 
   /** `step` : 0 pour toutes les étapes. */
   dossiers: (filter: DossierFilter, query: string, step = 0) =>
@@ -116,49 +119,49 @@ export const adminApi = {
     call<{ attention: number }>('/admin/dossiers/alerts', background ? { headers: BACKGROUND_HEADERS } : undefined),
 
   /** Le fil d'un dossier ; le lire le marque comme lu pour l'équipe. */
-  dossierMessages: (id: string, background = false) =>
-    call<Message[]>(`/admin/dossiers/${id}/messages`, background ? { headers: BACKGROUND_HEADERS } : undefined),
+  dossierMessages: async (id: string, background = false) =>
+    call<Message[]>(`/admin/dossiers/${pathId(id)}/messages`, background ? { headers: BACKGROUND_HEADERS } : undefined),
 
-  sendDossierMessage: (id: string, body: string) =>
-    call<Message[]>(`/admin/dossiers/${id}/messages`, json('POST', { body })),
+  sendDossierMessage: async (id: string, body: string) =>
+    call<Message[]>(`/admin/dossiers/${pathId(id)}/messages`, json('POST', { body })),
 
   dossierOptions: () => call<DossierOptions>('/admin/dossiers/options'),
 
   createDossier: (payload: Record<string, string | number | null>) =>
     call<{ dossier: AdminDossier; invitation: Invitation }>('/admin/dossiers', json('POST', payload)),
 
-  dossier: (id: string) => call<AdminDossier>(`/admin/dossiers/${id}`),
+  dossier: async (id: string) => call<AdminDossier>(`/admin/dossiers/${pathId(id)}`),
 
   /** Seuls les champs envoyés changent. */
-  updateDossier: (id: string, changes: Record<string, string | number | null>) =>
-    call<AdminDossier>(`/admin/dossiers/${id}`, json('PATCH', changes)),
+  updateDossier: async (id: string, changes: Record<string, string | number | null>) =>
+    call<AdminDossier>(`/admin/dossiers/${pathId(id)}`, json('PATCH', changes)),
 
-  deleteDossier: (id: string) => call<null>(`/admin/dossiers/${id}`, { method: 'DELETE' }),
+  deleteDossier: async (id: string) => call<null>(`/admin/dossiers/${pathId(id)}`, { method: 'DELETE' }),
 
-  invite: (id: string) => call<Invitation>(`/admin/dossiers/${id}/invitation`, { method: 'POST' }),
+  invite: async (id: string) => call<Invitation>(`/admin/dossiers/${pathId(id)}/invitation`, { method: 'POST' }),
 
-  addItem: (dossierId: string, item: { label: string; help: string; required: boolean }) =>
-    call<AdminDossier>(`/admin/dossiers/${dossierId}/items`, json('POST', item)),
+  addItem: async (dossierId: string, item: { label: string; help: string; required: boolean }) =>
+    call<AdminDossier>(`/admin/dossiers/${pathId(dossierId)}/items`, json('POST', item)),
 
-  updateItem: (
+  updateItem: async (
     id: string,
     changes: { label?: string; help?: string; required?: boolean; status?: ItemStatus; rejection_reason?: string },
-  ) => call<AdminDossier>(`/admin/items/${id}`, json('PATCH', changes)),
+  ) => call<AdminDossier>(`/admin/items/${pathId(id)}`, json('PATCH', changes)),
 
-  deleteItem: (id: string) => call<AdminDossier>(`/admin/items/${id}`, { method: 'DELETE' }),
+  deleteItem: async (id: string) => call<AdminDossier>(`/admin/items/${pathId(id)}`, { method: 'DELETE' }),
 
-  reorderItems: (dossierId: string, ids: string[]) =>
-    call<AdminDossier>(`/admin/dossiers/${dossierId}/items/order`, json('PUT', { ids })),
+  reorderItems: async (dossierId: string, ids: string[]) =>
+    call<AdminDossier>(`/admin/dossiers/${pathId(dossierId)}/items/order`, json('PUT', { ids })),
 
-  addPayment: (dossierId: string, payment: { amount: number; paid_on: string; label: string }) =>
-    call<AdminDossier>(`/admin/dossiers/${dossierId}/payments`, json('POST', payment)),
+  addPayment: async (dossierId: string, payment: { amount: number; paid_on: string; label: string }) =>
+    call<AdminDossier>(`/admin/dossiers/${pathId(dossierId)}/payments`, json('POST', payment)),
 
-  deletePayment: (id: string) => call<AdminDossier>(`/admin/payments/${id}`, { method: 'DELETE' }),
+  deletePayment: async (id: string) => call<AdminDossier>(`/admin/payments/${pathId(id)}`, { method: 'DELETE' }),
 
-  deleteDocument: (id: string) => call<AdminDossier>(`/admin/documents/${id}`, { method: 'DELETE' }),
+  deleteDocument: async (id: string) => call<AdminDossier>(`/admin/documents/${pathId(id)}`, { method: 'DELETE' }),
 };
 
 /** Adresse d'un document déposé par un client, à ouvrir ou télécharger. */
 export function adminDocumentUrl(id: string): string {
-  return `${API_BASE}/admin/documents/${id}`;
+  return isUuid(id) ? `${API_BASE}/admin/documents/${id}` : '#';
 }

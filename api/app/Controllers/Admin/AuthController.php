@@ -31,7 +31,10 @@ final class AuthController extends Controller
 
         // Vérifié avant le mot de passe : pendant le blocage, même le bon mot
         // de passe est refusé, sinon l'attaquant saurait qu'il l'a trouvé.
-        $retryAfter = LoginThrottle::retryAfter(self::THROTTLE, $email);
+        // La tentative est comptée dès maintenant, sous verrou : des requêtes
+        // simultanées ne passent pas toutes avant que leurs échecs soient
+        // inscrits. Une connexion réussie efface le compteur (clear).
+        $retryAfter = LoginThrottle::attempt(self::THROTTLE, $email);
 
         if ($retryAfter !== null) {
             return LoginThrottle::response($retryAfter);
@@ -45,8 +48,6 @@ final class AuthController extends Controller
         $hash = $admin['password_hash'] ?? '$2y$10$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG';
 
         if (!password_verify((string) $data['password'], (string) $hash) || $admin === null) {
-            LoginThrottle::recordFailure(self::THROTTLE, $email);
-
             return Response::error('Email ou mot de passe incorrect.', 401);
         }
 
