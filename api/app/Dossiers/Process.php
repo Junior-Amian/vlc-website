@@ -5,47 +5,51 @@ declare(strict_types=1);
 namespace App\Dossiers;
 
 /**
- * Déroulé d'un dossier : ses étapes et les pièces demandées par défaut.
+ * Déroulé d'un dossier : ses étapes et ses pièces.
+ *
+ * Depuis le 23/10/2026, l'équipe définit ses procédures dans le panel
+ * (table `procedures`, rubrique « Procédures ») : leurs étapes et leurs
+ * pièces sont copiées dans le dossier à son ouverture. Les listes ci-dessous
+ * ne servent plus que par défaut : dossier ouvert sans procédure, ou ouvert
+ * avant cette date, et proposition de départ d'une nouvelle procédure.
  *
  * PROVISOIRE. Libellés et pièces sont des propositions en attendant ceux du
  * client (réponses du 03/10/2026 : « met des noms fictifs, on les modifiera
- * une fois que j'aurai les étapes exactes »). Tout tient ici : l'espace
- * client et le panel lisent ces listes par l'API, sans copie côté front.
+ * une fois que j'aurai les étapes exactes »).
  *
- * Les étapes sont rangées par numéro (dossiers.step). Changer un libellé
- * est sans risque ; retirer une étape impose de renuméroter les dossiers
- * qui s'y trouvent.
+ * Les étapes d'un dossier sont rangées par rang (dossiers.step, à partir
+ * de 1). La première est franchie d'elle-même à la première connexion du
+ * client ; atteindre la dernière termine le dossier.
  */
 final class Process
 {
     /** @var array<int, array{label: string, description: string}> */
-    public const STEPS = [
-        1 => [
+    public const DEFAULT_STEPS = [
+        [
             'label'       => 'Dossier ouvert',
             'description' => 'Votre conseiller a ouvert votre dossier.',
         ],
-        2 => [
+        [
             'label'       => 'Documents à fournir',
             'description' => 'Déposez les pièces demandées. Votre conseiller les vérifie au fur et à mesure.',
         ],
-        3 => [
+        [
             'label'       => 'Dossier en préparation',
             'description' => 'Vos pièces sont complètes : nous préparons votre demande.',
         ],
-        4 => [
+        [
             'label'       => 'Déposé au consulat',
             'description' => 'Votre demande est entre les mains du consulat. Les délais dépendent de lui.',
         ],
-        5 => [
+        [
             'label'       => 'Décision rendue',
             'description' => 'Le consulat a rendu sa décision. Votre conseiller vous contacte.',
         ],
     ];
 
     /**
-     * Pièces copiées dans chaque nouveau dossier, puis ajustées à la main
-     * dans le panel. Des listes par type de visa et par pays sont prévues
-     * plus tard (V2 du cahier des charges).
+     * Pièces d'un dossier ouvert sans procédure, puis ajustées à la main
+     * dans le panel.
      *
      * @var array<int, array{label: string, help: string, required: bool}>
      */
@@ -79,25 +83,52 @@ final class Process
 
     public const FIRST_STEP = 1;
 
-    public static function last(): int
+    /**
+     * Étapes d'un dossier, numérotées : la copie faite à son ouverture, ou
+     * les étapes par défaut.
+     *
+     * @param array<string, mixed> $dossier Ligne de la table `dossiers`.
+     * @return array<int, array{number: int, label: string, description: string}>
+     */
+    public static function stepsOf(array $dossier): array
     {
-        return (int) array_key_last(self::STEPS);
+        $stored = isset($dossier['steps']) ? json_decode((string) $dossier['steps'], true) : null;
+
+        return self::numbered(is_array($stored) && $stored !== [] ? $stored : self::DEFAULT_STEPS);
     }
 
-    public static function exists(int $step): bool
+    /**
+     * Colonnes à écrire quand un dossier passe à l'étape `$step` : le libellé
+     * suit, pour les filtres et compteurs de la liste du panel.
+     *
+     * @param array<int, array{number: int, label: string, description: string}> $steps
+     * @return array{step: int, step_label: string, step_changed_at: string}
+     */
+    public static function moveTo(array $steps, int $step): array
     {
-        return isset(self::STEPS[$step]);
+        return [
+            'step'            => $step,
+            'step_label'      => $steps[$step - 1]['label'] ?? '',
+            'step_changed_at' => date('Y-m-d H:i:s'),
+        ];
     }
 
-    /** @return array<int, array{number: int, label: string, description: string}> */
-    public static function steps(): array
+    /**
+     * @param array<int, array<string, mixed>> $steps Étapes [{label, description}], dans l'ordre.
+     * @return array<int, array{number: int, label: string, description: string}>
+     */
+    public static function numbered(array $steps): array
     {
-        $steps = [];
+        $numbered = [];
 
-        foreach (self::STEPS as $number => $step) {
-            $steps[] = ['number' => $number, ...$step];
+        foreach (array_values($steps) as $index => $step) {
+            $numbered[] = [
+                'number'      => $index + 1,
+                'label'       => (string) ($step['label'] ?? ''),
+                'description' => (string) ($step['description'] ?? ''),
+            ];
         }
 
-        return $steps;
+        return $numbered;
     }
 }

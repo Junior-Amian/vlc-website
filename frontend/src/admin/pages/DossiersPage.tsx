@@ -41,7 +41,8 @@ const COMPARE: Record<SortKey, (a: DossierSummary, b: DossierSummary) => number>
 export default function DossiersPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<DossierFilter>('open');
-  const [step, setStep] = useState(0);
+  // Libellé d'étape ('' : toutes) : les étapes varient d'une procédure à l'autre.
+  const [step, setStep] = useState('');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<Sort>({ key: 'activity', direction: 'desc' });
@@ -71,7 +72,6 @@ export default function DossiersPage() {
     };
   }, [filter, query, step]);
 
-  const steps = data?.steps ?? [];
   const overview = data?.overview;
 
   const items = useMemo(() => {
@@ -88,7 +88,7 @@ export default function DossiersPage() {
         : { key, direction: key === 'client' || key === 'step' ? 'asc' : 'desc' },
     );
 
-  const filtered = query !== '' || step !== 0;
+  const filtered = query !== '' || step !== '';
 
   return (
     <div className="flex flex-col gap-6">
@@ -168,14 +168,15 @@ export default function DossiersPage() {
             <select
               id="etape-dossiers"
               value={step}
-              onChange={(event) => setStep(Number(event.target.value))}
+              onChange={(event) => setStep(event.target.value)}
               // Largeur à son contenu : inputClass occupe toute la ligne par défaut.
               className={`${inputClass.replace('w-full', 'w-auto')} max-w-full`}
             >
-              <option value={0}>Toutes les étapes</option>
-              {steps.map((candidate) => (
-                <option key={candidate.number} value={candidate.number}>
-                  {candidate.number}. {candidate.label} ({overview?.byStep[String(candidate.number)] ?? 0})
+              <option value="">Toutes les étapes</option>
+              {/* Les étapes où se trouve au moins un dossier, toutes procédures confondues. */}
+              {overview?.byStep.map((candidate) => (
+                <option key={candidate.label} value={candidate.label}>
+                  {candidate.label} ({candidate.count})
                 </option>
               ))}
             </select>
@@ -218,7 +219,7 @@ export default function DossiersPage() {
               type="button"
               onClick={() => {
                 setFilter('open');
-                setStep(0);
+                setStep('');
                 setSearch('');
               }}
               className="font-semibold text-secondary-ink underline-offset-2 hover:underline"
@@ -300,11 +301,12 @@ export default function DossiersPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="block font-medium text-on-surface">{item.service.label}</span>
+                      {/* La procédure, plus précise, reprend d'ordinaire le nom de la prestation. */}
+                      <span className="block font-medium text-on-surface">{item.procedure || item.service.label}</span>
                       <span className="block text-xs text-on-surface-variant">{item.country || '—'}</span>
                     </td>
                     <td className="px-3 py-3">
-                      <StepProgress step={item.step} total={steps.length || 5} label={steps.find((s) => s.number === item.step)?.label} />
+                      <StepProgress step={item.step} total={item.stepCount} label={item.stepLabel} />
                     </td>
                     <td className="px-3 py-3">
                       <Pieces item={item} />
@@ -331,7 +333,7 @@ export default function DossiersPage() {
                           <span className="shrink-0 text-xs text-on-surface-variant">{timeAgo(item.updatedAt)}</span>
                         </span>
                         <span className="block truncate text-sm text-on-surface-variant">
-                          {item.service.label}
+                          {item.procedure || item.service.label}
                           {item.country && ` · ${item.country}`}
                         </span>
                         <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums text-on-surface-variant">
@@ -340,7 +342,7 @@ export default function DossiersPage() {
                         </span>
                       </span>
                     </span>
-                    <StepProgress step={item.step} total={steps.length || 5} label={steps.find((s) => s.number === item.step)?.label} />
+                    <StepProgress step={item.step} total={item.stepCount} label={item.stepLabel} />
                     <span className="flex items-center justify-between gap-3 text-sm">
                       <Pieces item={item} />
                       <Balance item={item} />

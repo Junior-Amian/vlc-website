@@ -12,6 +12,8 @@ import DossierPage from './pages/DossierPage';
 import DossiersPage from './pages/DossiersPage';
 import LoginPage from './pages/LoginPage';
 import MediaPage from './pages/MediaPage';
+import ProcedurePage from './pages/ProcedurePage';
+import ProceduresPage from './pages/ProceduresPage';
 import RequestsPage from './pages/RequestsPage';
 import SectionPage from './pages/SectionPage';
 import type { Admin, Schema } from './types';
@@ -190,6 +192,9 @@ export default function AdminApp() {
           <Route path="dossiers" element={<DossiersPage />} />
           <Route path="dossiers/nouveau" element={<DossierNewPage />} />
           <Route path="dossiers/:id" element={<DossierPage />} />
+          <Route path="procedures" element={<ProceduresPage />} />
+          <Route path="procedures/nouvelle" element={<ProcedurePage />} />
+          <Route path="procedures/:id" element={<ProcedurePage />} />
           <Route path="sections/:key" element={<SectionPage />} />
           <Route path="medias" element={<MediaPage />} />
           <Route path="compte" element={<AccountPage />} />

@@ -17,6 +17,7 @@ use App\Controllers\Admin\DossierController;
 use App\Controllers\Admin\MediaController;
 use App\Controllers\Admin\MessageController as AdminMessageController;
 use App\Controllers\Admin\PaymentController;
+use App\Controllers\Admin\ProcedureController;
 use App\Controllers\Admin\SectionController;
 use App\Controllers\Admin\StatsController;
 use App\Controllers\Client\AuthController as ClientAuthController;
@@ -95,6 +96,12 @@ $router->group('/admin', static function (Router $router): void {
 
         $router->post('/dossiers/{id}/payments', [PaymentController::class, 'store']);
         $router->delete('/payments/{id}', [PaymentController::class, 'destroy']);
+
+        // Procédures : étapes et pièces copiées à l'ouverture d'un dossier.
+        $router->get('/procedures', [ProcedureController::class, 'index']);
+        $router->post('/procedures', [ProcedureController::class, 'store']);
+        $router->put('/procedures/{id}', [ProcedureController::class, 'update']);
+        $router->delete('/procedures/{id}', [ProcedureController::class, 'destroy']);
     }, [AdminAuthMiddleware::class]);
 }, [CsrfMiddleware::class]);
 

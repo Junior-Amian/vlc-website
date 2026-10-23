@@ -12,15 +12,17 @@ type Values = {
   email: string;
   phone: string;
   service: string;
+  procedure_id: string;
   country: string;
   amount_total: string;
 };
 
-const EMPTY: Values = { full_name: '', email: '', phone: '', service: '', country: '', amount_total: '' };
+const EMPTY: Values = { full_name: '', email: '', phone: '', service: '', procedure_id: '', country: '', amount_total: '' };
 
 /**
- * Ouvrir un dossier : crée le compte du client, son dossier avec la liste
- * de pièces par défaut, et lui envoie son invitation.
+ * Ouvrir un dossier : crée le compte du client, son dossier avec les étapes
+ * et les pièces de la procédure choisie (rubrique « Procédures », sinon
+ * celles par défaut), et lui envoie son invitation.
  *
  * Depuis une demande de contact (?demande=12), les coordonnées sont reprises
  * et la demande est marquée traitée à l'ouverture.
@@ -61,6 +63,19 @@ export default function DossierNewPage() {
     setErrors((current) => ({ ...current, [key]: [] }));
   };
 
+  const procedures = options?.procedures.filter((procedure) => procedure.service === values.service) ?? [];
+  const chosen = procedures.find((procedure) => procedure.id === values.procedure_id);
+  const procedureHelp = chosen
+    ? `${chosen.steps} étapes, ${chosen.checklist} pièce${chosen.checklist > 1 ? 's' : ''} à fournir.`
+    : 'Sans procédure : les étapes et les pièces par défaut.';
+
+  // Changer de prestation propose sa première procédure, s'il y en a une.
+  const chooseService = (service: string) => {
+    const first = options?.procedures.find((procedure) => procedure.service === service);
+    setValues((current) => ({ ...current, service, procedure_id: first?.id ?? '' }));
+    setErrors((current) => ({ ...current, service: [], procedure_id: [] }));
+  };
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -69,6 +84,7 @@ export default function DossierNewPage() {
     try {
       const response = await adminApi.createDossier({
         ...values,
+        procedure_id: values.procedure_id || null,
         amount_total: values.amount_total.replace(/\D/g, '') || null,
         contact_request_id: requestId,
       });
@@ -92,7 +108,7 @@ export default function DossierNewPage() {
 
     return (
       <div className="flex flex-col gap-6">
-        <PageHeader trail="Dossiers clients" title="Dossier ouvert" description={`${dossier.reference} · ${dossier.client.fullName} · ${dossier.service.label}`} />
+        <PageHeader trail="Dossiers clients" title="Dossier ouvert" description={`${dossier.reference} · ${dossier.client.fullName} · ${dossier.procedure || dossier.service.label}`} />
         <Panel title="Invitation du client" subtitle="Le client choisit son mot de passe depuis ce lien, puis répond à quelques questions avant d'accéder à son dossier.">
           <InvitationLink invitation={invitation} clientName={dossier.client.fullName} phone={dossier.client.phone} />
         </Panel>
@@ -132,7 +148,7 @@ export default function DossierNewPage() {
       <PageHeader
         trail="Dossiers clients"
         title="Ouvrir un dossier"
-        description="Le client reçoit par email un lien pour créer son accès. La liste de pièces par défaut est ajoutée ; vous l'ajusterez ensuite."
+        description="Le client reçoit par email un lien pour créer son accès. Les étapes et les pièces de la procédure choisie sont ajoutées au dossier ; vous ajusterez les pièces ensuite."
       />
 
       {error && <Notice tone="error">{error}</Notice>}
@@ -149,23 +165,52 @@ export default function DossierNewPage() {
           </Panel>
 
           <Panel title="Le dossier">
+            {/* Prestation et procédure sur toute la largeur : les noms de procédure sont longs. */}
             <div className="grid gap-5 sm:grid-cols-2">
-              <FieldShell id="dossier-service" label="Prestation" required errors={errors.service?.length ? errors.service : undefined}>
-                <select
-                  id="dossier-service"
-                  value={values.service}
-                  onChange={(event) => set('service')(event.target.value)}
-                  aria-invalid={Boolean(errors.service?.length)}
-                  className={inputClass}
+              <div className="sm:col-span-2">
+                <FieldShell id="dossier-service" label="Prestation" required errors={errors.service?.length ? errors.service : undefined}>
+                  <select
+                    id="dossier-service"
+                    value={values.service}
+                    onChange={(event) => chooseService(event.target.value)}
+                    aria-invalid={Boolean(errors.service?.length)}
+                    className={inputClass}
+                  >
+                    <option value="">Choisir…</option>
+                    {options.services.map((service) => (
+                      <option key={service.value} value={service.value}>
+                        {service.label}
+                      </option>
+                    ))}
+                  </select>
+                </FieldShell>
+              </div>
+              <div className="sm:col-span-2">
+                <FieldShell
+                  id="dossier-procedure"
+                  label="Procédure"
+                  required={false}
+                  help={procedureHelp}
+                  errors={errors.procedure_id?.length ? errors.procedure_id : undefined}
                 >
-                  <option value="">Choisir…</option>
-                  {options.services.map((service) => (
-                    <option key={service.value} value={service.value}>
-                      {service.label}
-                    </option>
-                  ))}
-                </select>
-              </FieldShell>
+                  <select
+                    id="dossier-procedure"
+                    value={values.procedure_id}
+                    onChange={(event) => set('procedure_id')(event.target.value)}
+                    disabled={values.service === ''}
+                    aria-invalid={Boolean(errors.procedure_id?.length)}
+                    aria-describedby={describedBy('dossier-procedure', procedureHelp, errors.procedure_id?.length ? errors.procedure_id : undefined)}
+                    className={inputClass}
+                  >
+                    {procedures.map((procedure) => (
+                      <option key={procedure.id} value={procedure.id}>
+                        {procedure.name}
+                      </option>
+                    ))}
+                    <option value="">Aucune (étapes et pièces par défaut)</option>
+                  </select>
+                </FieldShell>
+              </div>
               {field('country', 'Pays de destination', {}, undefined, false)}
               {field('amount_total', 'Montant total (FCFA)', { inputMode: 'numeric' }, "Laissez vide si le montant n'est pas encore fixé.", false)}
             </div>

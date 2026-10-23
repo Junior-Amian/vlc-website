@@ -186,6 +186,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </NavGroup>
 
         <NavGroup label="Réglages">
+          {/* Étapes et pièces des dossiers : réglées une fois, servies à chaque ouverture. */}
+          <NavLink to="/admin/procedures" onClick={guard} className={linkClass}>
+            {({ isActive }) => (
+              <>
+                <Icon name="checklist" size={20} className={iconClass(isActive)} />
+                Procédures
+              </>
+            )}
+          </NavLink>
           {settings.map((section) => sectionLink(section.key, section.label))}
           <NavLink to="/admin/medias" onClick={guard} className={linkClass}>
             {({ isActive }) => (

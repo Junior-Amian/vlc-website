@@ -74,7 +74,8 @@ final class Notifier
      */
     public static function stepAdvanced(array $dossier, array $client, int $step): void
     {
-        $current = Process::STEPS[$step] ?? null;
+        $steps = Process::stepsOf($dossier);
+        $current = $steps[$step - 1] ?? null;
 
         if ($current === null || !Client::isActive($client)) {
             return;
@@ -83,7 +84,7 @@ final class Notifier
         DossierMail::toClient(
             $client,
             sprintf('Votre dossier avance : %s · %s', $current['label'], Dossier::reference($dossier)),
-            sprintf('Étape %d sur %d : %s', $step, Process::last(), $current['label']),
+            sprintf('Étape %d sur %d : %s', $step, count($steps), $current['label']),
             sprintf("Bonjour %s,\n\nVotre dossier vient de franchir une étape.\n\n%s", DossierMail::firstName($client), $current['description']),
             ['label' => 'Suivre mon dossier', 'url' => DossierMail::url('/espace-client')]
         );

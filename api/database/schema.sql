@@ -171,8 +171,34 @@ CREATE TABLE IF NOT EXISTS `client_tokens` (
         REFERENCES `clients` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Un dossier de visa. `step` renvoie aux étapes d'app/Dossiers/Process.php ;
--- `amount_total` est en francs CFA, NULL tant que le montant n'est pas fixé.
+-- Modèles de procédure, définis dans le panel (« Visa visiteur – salarié ») :
+-- étapes du suivi et pièces à fournir, copiées dans le dossier à son
+-- ouverture. Structure validée par app/Dossiers/ProcedureSchema.php.
+CREATE TABLE IF NOT EXISTS `procedures` (
+    `id`         CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    -- Identifiant de la prestation (section « Prestations » du contenu).
+    `service`    VARCHAR(60) NOT NULL,
+    `name`       VARCHAR(120) NOT NULL,
+    -- [{label, description}], dans l'ordre du suivi.
+    `steps`      LONGTEXT NOT NULL,
+    -- [{label, help, required}], dans l'ordre d'affichage.
+    `checklist`  LONGTEXT NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `procedures_service` (`service`),
+    CONSTRAINT `procedures_steps_json` CHECK (JSON_VALID(`steps`)),
+    CONSTRAINT `procedures_checklist_json` CHECK (JSON_VALID(`checklist`))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Un dossier de visa. `amount_total` est en francs CFA, NULL tant que le
+-- montant n'est pas fixé.
+--
+-- Étapes : `steps` est la copie de celles de la procédure choisie à
+-- l'ouverture (NULL : étapes par défaut d'app/Dossiers/Process.php). `step`
+-- est le rang de l'étape en cours (à partir de 1) ; `step_count` et
+-- `step_label` en sont tirés à chaque changement, pour que la liste du
+-- panel filtre et compte en SQL (dossier terminé : step >= step_count).
 CREATE TABLE IF NOT EXISTS `dossiers` (
     `id`                 CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     -- Numéro d'ordre, d'où la référence lisible donnée au client
@@ -181,9 +207,14 @@ CREATE TABLE IF NOT EXISTS `dossiers` (
     `client_id`          CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     -- Identifiant de la prestation (section « Prestations » du contenu).
     `service`            VARCHAR(60) NOT NULL,
+    -- Nom de la procédure choisie à l'ouverture ('' : liste par défaut).
+    `procedure_name`     VARCHAR(120) NOT NULL DEFAULT '',
     `country`            VARCHAR(80) NOT NULL DEFAULT '',
     `step`               TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    `step_count`         TINYINT UNSIGNED NOT NULL DEFAULT 5,
+    `step_label`         VARCHAR(80) NOT NULL DEFAULT '',
     `step_changed_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `steps`              LONGTEXT NULL DEFAULT NULL,
     `amount_total`       INT UNSIGNED NULL DEFAULT NULL,
     -- Note interne, jamais montrée au client.
     `note`               TEXT NULL DEFAULT NULL,
@@ -209,11 +240,13 @@ CREATE TABLE IF NOT EXISTS `dossiers` (
     CONSTRAINT `dossiers_contact_request_fk` FOREIGN KEY (`contact_request_id`)
         REFERENCES `contact_requests` (`id`) ON DELETE SET NULL,
     CONSTRAINT `dossiers_created_by_fk` FOREIGN KEY (`created_by`)
-        REFERENCES `admins` (`id`) ON DELETE SET NULL
+        REFERENCES `admins` (`id`) ON DELETE SET NULL,
+    CONSTRAINT `dossiers_steps_json` CHECK (`steps` IS NULL OR JSON_VALID(`steps`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Pièces à fournir, propres à chaque dossier : la liste par défaut
--- (app/Dossiers/Process.php) est copiée à l'ouverture, puis ajustée à la main.
+-- Pièces à fournir, propres à chaque dossier : celles de la procédure
+-- choisie (ou la liste par défaut d'app/Dossiers/Process.php) sont copiées à
+-- l'ouverture, puis ajustées à la main.
 CREATE TABLE IF NOT EXISTS `checklist_items` (
     `id`               CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
     `dossier_id`       CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -300,4 +333,5 @@ CREATE TABLE IF NOT EXISTS `schema_migrations` (
 
 -- À compléter à chaque migration ajoutée (voir database/migrations/README.md).
 INSERT IGNORE INTO `schema_migrations` (`version`) VALUES
-('000_initial');
+('000_initial'),
+('001_procedures');

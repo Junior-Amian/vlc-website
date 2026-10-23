@@ -131,17 +131,31 @@ clients > Ouvrir un dossier** (ou le bouton « Ouvrir un dossier » d'une demand
 de contact) crée en une fois :
 
 - le compte du client (son email est son identifiant) ;
-- son dossier, à l'étape 1, avec la liste de pièces par défaut ;
+- son dossier, à l'étape 1, avec les étapes et les pièces de la procédure
+  choisie (voir « Procédures » ci-dessous), ou celles par défaut ;
 - un lien d'invitation valable 7 jours, envoyé par email et affiché dans le
   panel, à copier ou à envoyer par WhatsApp si l'email n'arrive pas. Le lien
   n'est montré qu'une fois ; « Renvoyer l'invitation » en crée un nouveau et
   annule l'ancien.
 
 Le client choisit son mot de passe (8 caractères au moins), répond aux
-questions d'ouverture, et le dossier passe de lui-même à l'étape « Documents à
-fournir ». Ensuite, tout se fait dans la fiche du dossier : faire avancer les
-étapes, valider ou refuser les pièces (un refus demande un motif, que le
-client lit), ajuster la liste, enregistrer les versements.
+questions d'ouverture, et le dossier passe de lui-même à la deuxième étape
+(« Documents à fournir » par défaut). Ensuite, tout se fait dans la fiche du
+dossier : faire avancer les étapes, valider ou refuser les pièces (un refus
+demande un motif, que le client lit), ajuster la liste, enregistrer les
+versements.
+
+**Procédures** (panel > Réglages > Procédures) : l'équipe y saisit une fois
+pour toutes, pour chaque prestation, une ou plusieurs procédures (« Visa
+visiteur – salarié(e) », « – retraité(e) »…) avec les étapes du suivi (3 à 10)
+et les pièces à fournir. « Dupliquer » part d'une procédure existante. À
+l'ouverture d'un dossier, on choisit la procédure : ses étapes et ses pièces
+sont **copiées** dans le dossier. Modifier ou supprimer une procédure ensuite
+ne change donc pas les dossiers déjà ouverts. La dernière étape termine le
+dossier (filtre « Terminés »). `seed.sql` installe six procédures tirées des
+notes du client du 22/10/2026 (étudiant, visiteur, affaires) ; les autres
+prestations reçoivent les étapes et pièces par défaut tant qu'on ne leur en a
+pas créé.
 
 À l'installation :
 
@@ -180,10 +194,11 @@ documents sont conservés tant que le dossier existe (choix du client) ;
 supprimer un dossier supprime le compte du client et tous ses fichiers. La
 politique de confidentialité devra le mentionner.
 
-Les éléments encore provisoires (étapes, pièces par défaut, questions
-d'ouverture) se changent chacun en un seul endroit : `app/Dossiers/Process.php`
-et `app/Dossiers/Onboarding.php`. L'espace client et le panel les lisent par
-l'API.
+Les éléments encore provisoires se changent chacun en un seul endroit : les
+étapes et pièces **par défaut** (dossiers ouverts sans procédure, et point de
+départ d'une nouvelle procédure) dans `app/Dossiers/Process.php`, les
+questions d'ouverture dans `app/Dossiers/Onboarding.php`. L'espace client et
+le panel les lisent par l'API.
 
 **Compte client de test (poste local seulement)** : `bin/create-client.php`
 crée un compte déjà activé, avec un dossier à l'étape 1 et les pièces par

@@ -54,7 +54,7 @@ Décisions prises avec le client, à ne pas remettre en cause sans le consulter 
 ```
 api/         API PHP (MVC natif, sans dépendances)
   app/Content/   Schéma du contenu, validation, assemblage public
-  app/Dossiers/  Espace client : étapes, questions d'ouverture, stockage des documents
+  app/Dossiers/  Espace client : étapes et procédures, questions d'ouverture, stockage des documents
   database/      schema.sql, seed.sql, migrations/, README d'exploitation du panel
   bin/           create-admin.php (comptes du panel), admin-sql.php (requête pour phpMyAdmin),
                  create-client.php (compte client de test, poste local seulement)
@@ -267,10 +267,25 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   usage.
 - **Éléments provisoires de l'espace client, chacun en un seul endroit** (à
   remplacer par ceux du client, sans toucher au front) : étapes et pièces par
-  défaut dans `api/app/Dossiers/Process.php`, questions d'ouverture dans
+  défaut dans `api/app/Dossiers/Process.php` (dossiers sans procédure, point
+  de départ d'une nouvelle procédure), questions d'ouverture dans
   `api/app/Dossiers/Onboarding.php` (réponses en JSON dans `clients.profile` :
   aucune migration), adresse de l'équipe `MAIL_DOSSIERS_ADDRESS` (`.env`).
-  Retirer une étape impose de renuméroter les dossiers qui s'y trouvent.
+- **Procédures** (23/10/2026, panel > Réglages > Procédures, table
+  `procedures`) : modèles libres rattachés à une prestation du site
+  (« Visa visiteur – salarié(e) »), avec étapes du suivi (3 à 10) et une
+  liste de pièces (choix de l'utilisateur : pas de pièces par étape).
+  Formulaire et validation dans le vocabulaire des sections
+  (`ProcedureSchema`, `ContentValidator`, `FieldControl`). À l'ouverture, les
+  étapes sont **copiées** dans `dossiers.steps` (NULL = étapes par défaut) et
+  les pièces dans `checklist_items` : modifier une procédure ne touche pas les
+  dossiers ouverts. Les étapes d'un dossier se lisent toujours par
+  `Process::stepsOf()`, jamais par une liste globale. `step_count` et
+  `step_label` sont recopiés à chaque changement d'étape (`Process::moveTo()`) :
+  « en cours » = `step < step_count`, et le filtre « Étape » de la liste du
+  panel porte sur le libellé (toutes procédures confondues). La deuxième
+  étape est atteinte d'elle-même quand le client a rempli ses informations,
+  sauf si c'est la dernière.
   Seule question qui n'est pas provisoire : nom et prénoms du passeport
   (`last_name`, `first_names`, demande du 10/10/2026), en tête de l'identité.
   À l'enregistrement, ils remplacent le nom saisi par l'équipe à
@@ -439,6 +454,13 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   étape et par portée dans la barre d'outils) et
   badge du menu (dossiers avec pièce à vérifier ou message non lu). Les emails
   ne contiennent jamais un message ni un document : ils mènent à l'espace.
+- **Procédures dans le panel** (23/10/2026, premier morceau de la V2, demandé
+  par l'utilisateur) : étapes et pièces par procédure, choisies à l'ouverture
+  du dossier (voir Conventions). Migration `001_procedures` ; six procédures
+  de départ dans `seed.sql`. Testé en local (curl et Chrome) : création,
+  duplication, ouverture d'un dossier, modèle modifié puis supprimé sans
+  effet sur le dossier ouvert, dernière étape qui termine le dossier, filtre
+  par étape, espace client inchangé.
 
 **Non fait — par ordre de priorité**
 
@@ -447,8 +469,9 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
    comptes du client (`api/database/README.md`), rendre `api/public/uploads/` et
    `api/storage/` accessibles en écriture.
 2. **Espace client, V2 du cahier des charges** (à lancer sur demande de
-   l'utilisateur) : modèles de listes par visa et pays, rappels, SMS,
-   historique, export, plusieurs dossiers par client, FAQ.
+   l'utilisateur) : rappels, SMS, historique, export, plusieurs dossiers par
+   client, FAQ. Les modèles par visa sont faits (Procédures) ; par pays, pas
+   encore.
 
 **Espace client ouvert sur le site (10/10/2026)** : le bouton « Espace client »
 de l'en-tête et du menu mobile mène à `/espace-client`, et la section
@@ -466,6 +489,11 @@ ne répond pas.
   8 caractères (le panel, lui, n'a aucune règle à la demande du client), et la
   conservation sans limite des documents, qui devra figurer dans la politique de
   confidentialité.
+
+- **Conditions d'admissibilité à faire confirmer** (`docs/Conditions_Admissibilite.md`) :
+  le nom de la seconde voie de résidence permanente (« Voie sans diplôme »
+  est provisoire) et l'expérience qu'elle demande ; pour les retraités, si le
+  « relevé des 6 derniers mois » est bancaire. Corrections dans le panel.
 
 - **Le logo mentionne « Production Agricole »**, une quatrième activité absente du
   cahier des charges et du site. À trancher : l'ajouter ou retirer la mention.
@@ -490,11 +518,6 @@ ne répond pas.
   propos »), témoignages et leurs photos, villes du tableau des départs à confirmer.
   Tous se remplacent depuis le panel, sans intervention technique.
   La photo de la bannière (`public/images/hero-paris-*.webp`, voyageuse à Paris)
-- **Conditions d'admissibilité à faire confirmer** (`docs/Conditions_Admissibilite.md`) :
-  le nom de la seconde voie de résidence permanente (« Voie sans diplôme »
-  est provisoire) et l'expérience qu'elle demande ; pour les retraités, si le
-  « relevé des 6 derniers mois » est bancaire. Corrections dans le panel.
-
   vient d'Unsplash (Atikh Bana, licence Unsplash, usage commercial libre) : elle
   peut rester, ou être remplacée par une photo du client aux mêmes largeurs
   (960, 1920, 2400 px). Volontairement pas un couple, pour ne pas la confondre

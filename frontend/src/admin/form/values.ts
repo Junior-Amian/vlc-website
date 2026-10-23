@@ -70,6 +70,26 @@ export function prepare(fields: FieldDef[], data: unknown): SectionData {
   return object;
 }
 
+/**
+ * Blocs d'un formulaire : champs simples consécutifs réunis, chaque liste
+ * d'éléments seule, pour qu'une longue liste ne noie pas les autres champs.
+ */
+export function groupFields(fields: FieldDef[]): FieldDef[][] {
+  const groups: FieldDef[][] = [];
+
+  for (const field of fields) {
+    const last = groups[groups.length - 1];
+
+    if (field.type === 'items' || !last || last[0].type === 'items') {
+      groups.push([field]);
+    } else {
+      last.push(field);
+    }
+  }
+
+  return groups;
+}
+
 /** Ancre d'URL à partir d'un titre : « Visa d'affaires » → « visa-d-affaires ». */
 export function slugify(text: string): string {
   return text

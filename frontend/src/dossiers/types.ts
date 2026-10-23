@@ -40,9 +40,12 @@ export type Dossier = {
   id: string;
   reference: string;
   service: { slug: string; label: string };
+  /** Procédure choisie à l'ouverture ('' : étapes et pièces par défaut). */
+  procedure: string;
   country: string;
   step: number;
   stepChangedAt: string;
+  /** Propres au dossier : copiées de sa procédure à l'ouverture. */
   steps: Step[];
   checklist: ChecklistItem[];
   finance: Finance;

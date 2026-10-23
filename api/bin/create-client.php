@@ -87,7 +87,9 @@ try {
         'client_id'  => $clientId,
         'service'    => $service,
         'country'    => '',
-        'step'       => Process::FIRST_STEP,
+        // Étapes par défaut : `steps` reste vide.
+        ...Process::moveTo(Process::numbered(Process::DEFAULT_STEPS), Process::FIRST_STEP),
+        'step_count' => count(Process::DEFAULT_STEPS),
         'created_by' => $admin !== null ? (string) $admin['id'] : null,
     ]);
 

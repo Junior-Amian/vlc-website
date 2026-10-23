@@ -65,7 +65,7 @@ export default function DossierPage() {
       <PageHeader
         trail={dossier.reference}
         title={dossier.client.fullName}
-        description={`${dossier.service.label}${dossier.country ? ` · ${dossier.country}` : ''} · ouvert le ${formatLongDate(dossier.createdAt)}`}
+        description={`${dossier.procedure || dossier.service.label}${dossier.country ? ` · ${dossier.country}` : ''} · ouvert le ${formatLongDate(dossier.createdAt)}`}
         actions={
           <Link to="/admin/dossiers" className={buttonClass.secondary}>
             <Icon name="arrow_back" size={18} />

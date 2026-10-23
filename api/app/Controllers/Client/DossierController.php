@@ -60,10 +60,14 @@ final class DossierController extends Controller
         $dossiers = new Dossier();
         $dossier = $dossiers->findForClient((string) $client['id']);
 
-        // Les informations reçues, le dossier passe de lui-même à l'étape
-        // des documents. Les étapes suivantes sont avancées par l'équipe.
-        if ($firstTime && $dossier !== null && (int) $dossier['step'] === Process::FIRST_STEP) {
-            $dossiers->update((string) $dossier['id'], ['step' => Process::FIRST_STEP + 1, 'step_changed_at' => date('Y-m-d H:i:s')]);
+        // Les informations reçues, le dossier passe de lui-même à la
+        // deuxième étape (celle des documents, par défaut). Les suivantes
+        // sont avancées par l'équipe. Jamais quand la deuxième est la
+        // dernière : le dossier serait terminé.
+        $steps = $dossier !== null ? Process::stepsOf($dossier) : [];
+
+        if ($firstTime && $dossier !== null && (int) $dossier['step'] === Process::FIRST_STEP && count($steps) > 2) {
+            $dossiers->update((string) $dossier['id'], Process::moveTo($steps, Process::FIRST_STEP + 1));
         }
 
         return Response::success(

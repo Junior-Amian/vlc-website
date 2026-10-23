@@ -7,31 +7,14 @@ import { adminApi, errorMessage } from '../api';
 import { useAdmin } from '../AdminContext';
 import FieldControl from '../form/FieldControl';
 import { FormContext, type FormContextValue } from '../form/FormContext';
-import { isSame, prepare } from '../form/values';
+import { groupFields, isSame, prepare } from '../form/values';
 import { asset } from '../../lib/asset';
 import { sectionAnchor } from '../sections';
-import type { FieldDef, FieldErrors, SectionData, SectionPayload } from '../types';
+import type { FieldErrors, SectionData, SectionPayload } from '../types';
 import { formatDate } from '../../lib/format';
 import { ButtonSpinner, buttonClass, Notice, PageHeader, Spinner } from '../ui';
 
 type Feedback = { tone: 'success' | 'error'; text: string; conflict?: boolean } | null;
-
-/** Champs simples consécutifs réunis ; chaque liste d'éléments seule. */
-function groupFields(fields: FieldDef[]): FieldDef[][] {
-  const groups: FieldDef[][] = [];
-
-  for (const field of fields) {
-    const last = groups[groups.length - 1];
-
-    if (field.type === 'items' || !last || last[0].type === 'items') {
-      groups.push([field]);
-    } else {
-      last.push(field);
-    }
-  }
-
-  return groups;
-}
 
 /**
  * Modification d'une section du site, avec un formulaire construit à partir

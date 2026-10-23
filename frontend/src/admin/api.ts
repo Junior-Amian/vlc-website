@@ -10,6 +10,8 @@ import type {
   DossierOptions,
   Invitation,
   MediaItem,
+  Procedure,
+  ProcedureList,
   RequestCounts,
   RequestFilter,
   RequestPage,
@@ -110,9 +112,9 @@ export const adminApi = {
 
   deleteMedia: async (id: string) => call<null>(`/admin/media/${pathId(id)}`, { method: 'DELETE' }),
 
-  /** `step` : 0 pour toutes les étapes. */
-  dossiers: (filter: DossierFilter, query: string, step = 0) =>
-    call<DossierList>(`/admin/dossiers?${new URLSearchParams({ filter, q: query, step: String(step) }).toString()}`),
+  /** `step` : libellé d'une étape, '' pour toutes. */
+  dossiers: (filter: DossierFilter, query: string, step = '') =>
+    call<DossierList>(`/admin/dossiers?${new URLSearchParams({ filter, q: query, step }).toString()}`),
 
   /** Dossiers qui demandent l'attention de l'équipe : le badge du menu. */
   dossierAlerts: (background = false) =>
@@ -126,6 +128,15 @@ export const adminApi = {
     call<Message[]>(`/admin/dossiers/${pathId(id)}/messages`, json('POST', { body })),
 
   dossierOptions: () => call<DossierOptions>('/admin/dossiers/options'),
+
+  procedures: () => call<ProcedureList>('/admin/procedures'),
+
+  createProcedure: (data: SectionData) => call<Procedure>('/admin/procedures', json('POST', { data })),
+
+  saveProcedure: async (id: string, data: SectionData) =>
+    call<Procedure>(`/admin/procedures/${pathId(id)}`, json('PUT', { data })),
+
+  deleteProcedure: async (id: string) => call<null>(`/admin/procedures/${pathId(id)}`, { method: 'DELETE' }),
 
   createDossier: (payload: Record<string, string | number | null>) =>
     call<{ dossier: AdminDossier; invitation: Invitation }>('/admin/dossiers', json('POST', payload)),

@@ -1,5 +1,5 @@
 import type { MediaImage } from '../content/types';
-import type { Dossier, Step } from '../dossiers/types';
+import type { Dossier } from '../dossiers/types';
 
 /*
   Schéma des sections, tel que l'API le décrit (GET /api/admin/schema,
@@ -155,8 +155,13 @@ export type DossierSummary = {
   clientEmail: string;
   clientActive: boolean;
   service: { slug: string; label: string };
+  /** Procédure choisie à l'ouverture ('' : étapes et pièces par défaut). */
+  procedure: string;
   country: string;
   step: number;
+  /** Les étapes varient d'une procédure à l'autre : nombre et libellé de l'étape en cours. */
+  stepCount: number;
+  stepLabel: string;
   itemsRequired: number;
   itemsValidated: number;
   itemsToReview: number;
@@ -169,8 +174,11 @@ export type DossierSummary = {
 /** Vue d'ensemble de tous les dossiers, quel que soit le filtre (Dossier::overview). */
 export type DossierOverview = {
   counts: Record<DossierFilter, number>;
-  /** Nombre de dossiers à chaque étape, par numéro d'étape. */
-  byStep: Record<string, number>;
+  /**
+   * Nombre de dossiers à chaque étape, par libellé (toutes procédures
+   * confondues), dans l'ordre du suivi.
+   */
+  byStep: { label: string; count: number }[];
   pendingInvitations: number;
   /** Reste à encaisser sur les dossiers en cours, en FCFA. */
   outstanding: number;
@@ -179,10 +187,42 @@ export type DossierOverview = {
 export type DossierList = {
   items: DossierSummary[];
   overview: DossierOverview;
-  steps: Step[];
 };
 
-export type DossierOptions = { services: Option[]; steps: Step[] };
+/** Procédure proposée à l'ouverture d'un dossier : l'essentiel. */
+export type ProcedureOption = {
+  id: string;
+  service: string;
+  name: string;
+  /** Nombre d'étapes et de pièces. */
+  steps: number;
+  checklist: number;
+};
+
+export type DossierOptions = { services: Option[]; procedures: ProcedureOption[] };
+
+/**
+ * Procédure de la rubrique « Procédures » (api/app/Dossiers/ProcedureSchema.php) :
+ * étapes du suivi et pièces, copiées dans le dossier à son ouverture.
+ */
+export type Procedure = {
+  id: string;
+  service: string;
+  serviceLabel: string;
+  name: string;
+  steps: { label: string; description: string }[];
+  checklist: { label: string; help: string; required: boolean }[];
+  updatedAt: string;
+};
+
+export type ProcedureList = {
+  items: Procedure[];
+  /** Champs du formulaire, dans le vocabulaire des sections du site. */
+  fields: FieldDef[];
+  options: Record<string, Option[]>;
+  /** Étapes proposées pour une nouvelle procédure. */
+  defaults: { steps: Procedure['steps'] };
+};
 
 /** Lien d'invitation : envoyé par email, et affiché pour un envoi par WhatsApp. */
 export type Invitation = { url: string; emailSent: boolean; expiresAt: string };

@@ -28,6 +28,8 @@ const ADMIN_ICONS = [
   'visibility_off',
   // Dossiers clients (états des pièces : dossiers/status.ts)
   'check_circle', 'content_copy', 'description', 'edit', 'folder_open', 'hourglass_top', 'send',
+  // Procédures (menu, enchaînement des étapes)
+  'checklist', 'chevron_right',
   // Choix proposés dans les formulaires
   'account_balance', 'business_center', 'call', 'chat', 'favorite', 'flight', 'flight_land',
   'flight_takeoff', 'forum', 'gavel', 'home_work', 'location_on', 'luggage', 'mail',

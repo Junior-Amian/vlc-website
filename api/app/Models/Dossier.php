@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Core\Model;
-use App\Dossiers\Process;
 
 /**
  * Dossier de visa d'un client.
@@ -15,8 +14,8 @@ final class Dossier extends Model
     protected string $table = 'dossiers';
 
     protected array $fillable = [
-        'client_id', 'service', 'country', 'step', 'step_changed_at', 'amount_total', 'note',
-        'contact_request_id', 'created_by',
+        'client_id', 'service', 'procedure_name', 'country', 'step', 'step_count', 'step_label',
+        'step_changed_at', 'steps', 'amount_total', 'note', 'contact_request_id', 'created_by',
     ];
 
     /**
@@ -24,6 +23,9 @@ final class Dossier extends Model
      * d'être vérifiées ; « messages » : le client a écrit et personne n'a lu.
      */
     public const FILTERS = ['open', 'review', 'messages', 'closed', 'all'];
+
+    /** Dossier en cours : sa dernière étape n'est pas atteinte. */
+    private const OPEN = 'd.`step` < d.`step_count`';
 
     /** Des pièces attendent d'être vérifiées. */
     private const HAS_REVIEW = 'EXISTS (SELECT 1 FROM `checklist_items` i WHERE i.`dossier_id` = d.`id` AND i.`status` = \'received\')';
@@ -47,23 +49,23 @@ final class Dossier extends Model
      * Liste du panel, la plus récemment active d'abord. Le volume d'une
      * agence (quelques centaines de dossiers) ne justifie pas de pagination.
      *
-     * @param int|null $step Ne garder que les dossiers à cette étape.
+     * @param string $step Ne garder que les dossiers arrivés à l'étape de ce libellé ('' : tous).
      * @return array<int, array<string, mixed>>
      */
-    public function search(string $filter, string $query, ?int $step = null): array
+    public function search(string $filter, string $query, string $step = ''): array
     {
         $conditions = [
-            'open'     => 'd.`step` < :last',
-            'closed'   => 'd.`step` >= :last',
+            'open'     => self::OPEN,
+            'closed'   => 'NOT ' . self::OPEN,
             'review'   => self::HAS_REVIEW,
             'messages' => self::HAS_UNREAD,
         ];
 
         $where = [$conditions[$filter] ?? '1 = 1'];
-        $params = str_contains($where[0], ':last') ? ['last' => Process::last()] : [];
+        $params = [];
 
-        if ($step !== null) {
-            $where[] = 'd.`step` = :step';
+        if ($step !== '') {
+            $where[] = 'd.`step_label` = :step';
             $params['step'] = $step;
         }
 
@@ -91,29 +93,37 @@ final class Dossier extends Model
      * panel : nombre par filtre et par étape, invitations en attente, et ce
      * qui reste à encaisser sur les dossiers en cours.
      *
-     * @return array{counts: array<string, int>, byStep: array<int, int>, pendingInvitations: int, outstanding: int}
+     * Les étapes viennent des procédures : elles sont comptées par libellé,
+     * dans l'ordre où elles arrivent dans le suivi (« Déposé au consulat »
+     * réunit les dossiers de toutes les procédures qui ont cette étape).
+     *
+     * @return array{counts: array<string, int>, byStep: array<int, array{label: string, count: int}>, pendingInvitations: int, outstanding: int}
      */
     public function overview(): array
     {
         $statement = $this->db()->prepare(
             'SELECT
                 COUNT(*) AS total,
-                COALESCE(SUM(d.`step` < :last), 0) AS open_count,
+                COALESCE(SUM(' . self::OPEN . '), 0) AS open_count,
                 COALESCE(SUM(' . self::HAS_REVIEW . '), 0) AS review_count,
                 COALESCE(SUM(' . self::HAS_UNREAD . '), 0) AS messages_count,
                 COALESCE(SUM(c.`password_hash` IS NULL), 0) AS pending_invitations,
-                COALESCE(SUM(CASE WHEN d.`step` < :last2 AND d.`amount_total` IS NOT NULL THEN GREATEST(0, CAST(d.`amount_total` AS SIGNED)
+                COALESCE(SUM(CASE WHEN ' . self::OPEN . ' AND d.`amount_total` IS NOT NULL THEN GREATEST(0, CAST(d.`amount_total` AS SIGNED)
                     - (SELECT COALESCE(SUM(p.`amount`), 0) FROM `dossier_payments` p WHERE p.`dossier_id` = d.`id`)) ELSE 0 END), 0) AS outstanding
              FROM `dossiers` d
              JOIN `clients` c ON c.`id` = d.`client_id`'
         );
-        $statement->execute(['last' => Process::last(), 'last2' => Process::last()]);
+        $statement->execute();
         $row = $statement->fetch() ?: [];
 
-        $byStep = array_fill_keys(array_keys(Process::STEPS), 0);
+        $byStep = [];
+        $lines = $this->db()->query(
+            'SELECT `step_label`, COUNT(*) AS total FROM `dossiers` WHERE `step_label` <> \'\'
+             GROUP BY `step_label` ORDER BY MIN(`step`), `step_label`'
+        );
 
-        foreach ($this->db()->query('SELECT `step`, COUNT(*) AS total FROM `dossiers` GROUP BY `step`') as $line) {
-            $byStep[(int) $line['step']] = (int) $line['total'];
+        foreach ($lines as $line) {
+            $byStep[] = ['label' => (string) $line['step_label'], 'count' => (int) $line['total']];
         }
 
         $total = (int) ($row['total'] ?? 0);

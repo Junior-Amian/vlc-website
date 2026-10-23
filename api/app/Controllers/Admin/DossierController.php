@@ -19,6 +19,7 @@ use App\Models\Client;
 use App\Models\ContactRequest;
 use App\Models\ContentSection;
 use App\Models\Dossier;
+use App\Models\Procedure;
 use Throwable;
 
 /**
@@ -32,6 +33,7 @@ final class DossierController extends Controller
         'email'        => 'adresse email',
         'phone'        => 'téléphone',
         'service'      => 'prestation',
+        'procedure_id' => 'procédure',
         'country'      => 'pays de destination',
         'amount_total' => 'montant total',
         'step'         => 'étape',
@@ -43,8 +45,8 @@ final class DossierController extends Controller
         $filter = (string) $request->input('filter', 'open');
         $filter = in_array($filter, Dossier::FILTERS, true) ? $filter : 'open';
         $query = mb_substr(trim((string) $request->input('q', '')), 0, 100);
-        $step = (int) $request->input('step', 0);
-        $step = Process::exists($step) ? $step : null;
+        // Libellé d'étape : les étapes varient d'une procédure à l'autre.
+        $step = mb_substr(trim((string) $request->input('step', '')), 0, 80);
 
         $dossiers = new Dossier();
         $services = DossierView::services();
@@ -56,7 +58,6 @@ final class DossierController extends Controller
             ),
             // Vue d'ensemble de tous les dossiers, quel que soit le filtre.
             'overview' => $dossiers->overview(),
-            'steps'    => Process::steps(),
         ]);
     }
 
@@ -70,8 +71,18 @@ final class DossierController extends Controller
     public function options(Request $request): Response
     {
         return Response::success([
-            'services' => (new ContentSection())->serviceOptions(),
-            'steps'    => Process::steps(),
+            'services'   => (new ContentSection())->serviceOptions(),
+            // L'essentiel de chaque procédure, pour la choisir à l'ouverture.
+            'procedures' => array_map(
+                static fn (array $row): array => [
+                    'id'        => (string) $row['id'],
+                    'service'   => (string) $row['service'],
+                    'name'      => (string) $row['name'],
+                    'steps'     => count(Procedure::decode($row['steps'])),
+                    'checklist' => count(Procedure::decode($row['checklist'])),
+                ],
+                (new Procedure())->allSorted()
+            ),
         ]);
     }
 
@@ -82,12 +93,27 @@ final class DossierController extends Controller
             'email'              => 'required|email|max:180',
             'phone'              => 'string|max:30|regex:/^\+?[0-9 ().-]+$/',
             'service'            => 'required|string|max:60',
+            'procedure_id'       => 'uuid',
             'country'            => 'string|max:80',
             'amount_total'       => 'integer|min:0|max:100000000',
             'contact_request_id' => 'uuid',
         ], self::LABELS);
 
         $this->assertService((string) $data['service']);
+
+        // Sans procédure : étapes et pièces par défaut (Process).
+        $procedure = null;
+
+        if ($data['procedure_id'] !== null) {
+            $procedure = (new Procedure())->find((string) $data['procedure_id']);
+
+            if ($procedure === null || (string) $procedure['service'] !== $data['service']) {
+                throw new ValidationException(['procedure_id' => ['Choisissez une procédure de cette prestation.']]);
+            }
+        }
+
+        $steps = Process::numbered($procedure !== null ? Procedure::decode($procedure['steps']) : Process::DEFAULT_STEPS);
+        $checklist = $procedure !== null ? Procedure::decode($procedure['checklist']) : Process::DEFAULT_CHECKLIST;
 
         $email = mb_strtolower((string) $data['email']);
         $clients = new Client();
@@ -114,11 +140,17 @@ final class DossierController extends Controller
                 'phone'     => (string) ($data['phone'] ?? ''),
             ]);
 
+            // Les étapes sont copiées : modifier la procédure ensuite ne
+            // change pas ce dossier. Sans procédure, `steps` reste vide et
+            // le dossier suit les étapes par défaut.
             $dossierId = (new Dossier())->create([
                 'client_id'          => $clientId,
                 'service'            => $data['service'],
+                'procedure_name'     => $procedure !== null ? (string) $procedure['name'] : '',
                 'country'            => (string) ($data['country'] ?? ''),
-                'step'               => Process::FIRST_STEP,
+                ...Process::moveTo($steps, Process::FIRST_STEP),
+                'step_count'         => count($steps),
+                'steps'              => $procedure !== null ? (string) $procedure['steps'] : null,
                 'amount_total'       => $data['amount_total'] !== null ? (int) $data['amount_total'] : null,
                 'contact_request_id' => $requestId,
                 'created_by'         => (string) $admin['id'],
@@ -126,12 +158,12 @@ final class DossierController extends Controller
 
             $items = new ChecklistItem();
 
-            foreach (Process::DEFAULT_CHECKLIST as $position => $item) {
+            foreach (array_values($checklist) as $position => $item) {
                 $items->create([
                     'dossier_id' => $dossierId,
-                    'label'      => $item['label'],
-                    'help'       => $item['help'],
-                    'required'   => $item['required'] ? 1 : 0,
+                    'label'      => (string) $item['label'],
+                    'help'       => (string) ($item['help'] ?? ''),
+                    'required'   => ($item['required'] ?? true) ? 1 : 0,
                     'position'   => $position,
                 ]);
             }
@@ -189,13 +221,14 @@ final class DossierController extends Controller
 
         if ($sent('step')) {
             $step = (int) $data['step'];
+            $steps = Process::stepsOf($dossier);
 
-            if (!Process::exists($step)) {
+            if ($step < 1 || $step > count($steps)) {
                 throw new ValidationException(['step' => ['Étape inconnue.']]);
             }
 
             if ($step !== (int) $dossier['step']) {
-                $changes += ['step' => $step, 'step_changed_at' => date('Y-m-d H:i:s')];
+                $changes += Process::moveTo($steps, $step);
             }
         }
 
