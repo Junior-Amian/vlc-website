@@ -14,6 +14,7 @@ explicitement demandé par le client (« une DA qui parle du couple qui fait voy
 | `docs/Services_Assistanat_Visa.pdf` | Les 5 prestations rédigées par le client |
 | `docs/Espace_Client_Cahier_des_Charges.pdf` | Périmètre de l'espace client (priorité 1 livrée, priorité 2 et V2 à venir) |
 | `docs/Contrat_Referent_CU.pdf` | Contrat de référent avec le Collège Universel (Gatineau, QC) : source de la section `#college-universel` |
+| `docs/Conditions_Admissibilite.md` | Critères d'admissibilité par prestation (notes du client du 22/10/2026) et lecture retenue |
 | `docs/logo.jpeg` | Logo officiel — source des couleurs de marque |
 | `template/code.html` + `screen.png` | Maquette HTML validée visuellement par le client |
 | `template/DESIGN.md` | Jetons de design proposés (Noto Serif + Plus Jakarta Sans) |
@@ -192,6 +193,23 @@ tous deux avec le mot de passe de test `admin` (poste local seulement). GD n'est
   au-dessus du titre et après la fiche. À partir de `sm`, il reste plein écran.
   L'accroche et le bouton concluent la section après la dernière fiche. Les repères sont décalés de 8rem, le `scroll-padding-top` de
   la page : changer l'un impose de changer l'autre.
+  `scrollToCard` mesure la position d'une fiche avec `getBoundingClientRect`,
+  pas `offsetLeft` : l'animation d'entrée laisse une transformation sur
+  chaque `<li>`, qui fausse `offsetLeft` (0 pour toutes ; les liens
+  `#visa-…` du pied de page n'avançaient plus la galerie avant le 22/10/2026).
+- **Conditions d'admissibilité** (22/10/2026, à la place d'une section
+  dédiée, à la demande de l'utilisateur) : un bouton en bas de chaque fiche
+  ouvre une fenêtre `<dialog>` (`ServiceConditions.tsx`). Le bouton n'existe
+  que si la prestation a des conditions saisies (champs `conditionsIntro`,
+  `paths`, `documents` de la prestation ; mention commune `conditionsNote`
+  de la section). Une condition s'écrit « Libellé : valeur » : le libellé
+  aligne les voies côte à côte, une valeur de 16 caractères au plus
+  s'affiche en grand. Les six fenêtres sont pré-rendues, fermées (texte
+  indexé). Une fenêtre ouverte bloque le défilement de la page
+  (`html:has(dialog[open])` dans `index.css`). Le bouton est le seul
+  élément focalisable d'une fiche : au clavier, `revealCard` (`Services.tsx`)
+  fait avancer la galerie épinglée jusqu'à lui, à l'image suivante, sans
+  quoi le défilement du navigateur vers le focus annule celui de la galerie.
 - **`react-router-dom` est figé en 6.x** : `vite-react-ssg` déclare `^6.14.1` en peer.
   Ne pas monter en v7 sans vérifier que l'outil le supporte.
 - **Validateur PHP** (`App\Core\Validator`) : `min`/`max` comparent la valeur
@@ -472,6 +490,11 @@ ne répond pas.
   propos »), témoignages et leurs photos, villes du tableau des départs à confirmer.
   Tous se remplacent depuis le panel, sans intervention technique.
   La photo de la bannière (`public/images/hero-paris-*.webp`, voyageuse à Paris)
+- **Conditions d'admissibilité à faire confirmer** (`docs/Conditions_Admissibilite.md`) :
+  le nom de la seconde voie de résidence permanente (« Voie sans diplôme »
+  est provisoire) et l'expérience qu'elle demande ; pour les retraités, si le
+  « relevé des 6 derniers mois » est bancaire. Corrections dans le panel.
+
   vient d'Unsplash (Atikh Bana, licence Unsplash, usage commercial libre) : elle
   peut rester, ou être remplacée par une photo du client aux mêmes largeurs
   (960, 1920, 2400 px). Volontairement pas un couple, pour ne pas la confondre
@@ -500,9 +523,11 @@ ne répond pas.
   `brand-*` dans `index.css`, classes dans `src/components/ui/brand.ts`.
   Photos du couple et des clients encore à fournir (emplacements marqués `TODO photo`).
 - **Sixième prestation (26/09/2026) : contrat de travail au Canada** (résidence
-  temporaire), ouverte pour l'instant aux métiers de la santé et de l'éducation
-  préscolaire. Placée après la résidence permanente, couleur rouge. Si le client
-  élargit les secteurs, l'accroche se met à jour dans le panel.
+  temporaire), ouverte d'abord à la santé et à l'éducation préscolaire, puis
+  à la santé seulement depuis le 22/10/2026 (c'est le PTET des notes du
+  client, voir `docs/Conditions_Admissibilite.md`). Placée après la
+  résidence permanente, couleur rouge. Si le client élargit les secteurs,
+  l'accroche se met à jour dans le panel.
 - **Panel d'administration (02/10/2026)**, à la demande de l'utilisateur, qui a
   écarté tout déploiement par GitHub (le client dépose les fichiers par FTP) et
   choisi MySQL. D'où le contenu chargé à l'exécution plutôt qu'une recompilation

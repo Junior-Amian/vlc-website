@@ -175,6 +175,10 @@ final class ContentSchema
                         'help' => 'Pensez à le mettre à jour s\'il annonce un nombre de prestations.',
                     ]),
                     $f('text', 'intro', 'Introduction', ['max' => 300]),
+                    $f('string', 'conditionsNote', 'Mention sous les conditions', [
+                        'max'  => 200,
+                        'help' => 'En bas de la fenêtre des conditions d\'admissibilité, pour toutes les prestations.',
+                    ]),
                     $f('items', 'items', 'Prestations', [
                         'itemLabel'  => 'Prestation',
                         'titleField' => 'title',
@@ -198,6 +202,49 @@ final class ContentSchema
                                 'max'      => 40,
                                 'maxItems' => 6,
                                 'required' => false,
+                            ]),
+                            // Conditions d'admissibilité, affichées dans une fenêtre
+                            // ouverte depuis la fiche (bouton absent si rien n'est saisi).
+                            $f('string', 'conditionsIntro', 'Conditions : sous-titre', [
+                                'max'      => 160,
+                                'required' => false,
+                                'help'     => 'Sous le titre de la fenêtre des conditions : programme, secteur, pays (ex. : Chine et Turquie).',
+                            ]),
+                            $f('items', 'paths', 'Conditions : voies ou profils', [
+                                'itemLabel'  => 'Voie ou profil',
+                                'titleField' => 'title',
+                                'maxItems'   => 4,
+                                'required'   => false,
+                                'help'       => 'Le bouton « Conditions d\'admissibilité » n\'apparaît sur la fiche que si une condition ou une pièce est saisie. Plusieurs voies se présentent côte à côte.',
+                                'fields'     => [
+                                    $f('string', 'title', 'Titre', [
+                                        'max'      => 60,
+                                        'required' => false,
+                                        'help'     => 'Ex. : Entrée Express, Salarié(e). Facultatif quand il n\'y a qu\'une voie.',
+                                    ]),
+                                    $f('string', 'note', 'Précision', ['max' => 80, 'required' => false]),
+                                    $f('list', 'criteria', 'Conditions', [
+                                        'of'       => 'string',
+                                        'max'      => 160,
+                                        'maxItems' => 10,
+                                        'required' => false,
+                                        'help'     => 'Une par ligne, sous la forme « Âge : 18 à 45 ans ». Le libellé avant les deux-points aligne les voies entre elles ; une valeur courte s\'affiche en grand.',
+                                    ]),
+                                    $f('list', 'documents', 'Pièces à fournir', [
+                                        'of'       => 'string',
+                                        'max'      => 120,
+                                        'maxItems' => 15,
+                                        'required' => false,
+                                        'help'     => 'Une par ligne. Une précision entre parenthèses en fin de ligne, « (le cas échéant) », s\'affiche plus discrètement.',
+                                    ]),
+                                ],
+                            ]),
+                            $f('list', 'documents', 'Conditions : pièces communes', [
+                                'of'       => 'string',
+                                'max'      => 120,
+                                'maxItems' => 15,
+                                'required' => false,
+                                'help'     => 'Pièces demandées quelle que soit la voie.',
                             ]),
                         ],
                     ]),

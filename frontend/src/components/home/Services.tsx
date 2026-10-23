@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState, type FocusEvent } from 'react';
 import Icon from '../ui/Icon';
 import { Container } from '../ui/Section';
 import { brand } from '../ui/brand';
 import { useHorizontalPin, type PinMode } from '../../lib/useHorizontalPin';
 import { useContent } from '../../content/ContentProvider';
 import type { Service } from '../../content/types';
+import ServiceConditions, { hasConditions } from './ServiceConditions';
 
 /** Nombre écrit en toutes lettres dans la consigne de la galerie (« les six prestations »). */
 const NUMBER_WORDS = [
@@ -24,9 +25,11 @@ const NUMBER_WORDS = [
  * Tout le texte du client est visible : rien n'est replié, donc rien
  * n'échappe au HTML pré-rendu ni aux moteurs de recherche.
  *
- * Aucun élément focalisable à l'intérieur, volontairement : une fois la
- * galerie épinglée, le navigateur ne sait pas ramener à l'écran un lien parti
- * sur la droite. La section a un seul appel à l'action, placé avec le titre.
+ * Un seul élément focalisable, le bouton des conditions d'admissibilité
+ * (absent si la prestation n'en a pas). Une fois la galerie épinglée, le
+ * navigateur ne sait pas ramener à l'écran un bouton parti sur la droite :
+ * `onFocus` s'en charge (voir revealCard dans Services). L'appel à l'action
+ * de la section reste unique, placé avec le titre.
  *
  * Attention à la liste de `transition-[…]` : Tailwind 4 applique
  * `hover:-translate-y-1.5` par la propriété indépendante `translate`, que
@@ -75,17 +78,24 @@ function ServiceCard({
   service,
   index,
   format,
+  onConditions,
+  onFocus,
 }: {
   service: Service;
   index: number;
   format: PinMode;
+  /** Ouvre la fenêtre des conditions ; absent si la prestation n'en a pas. */
+  onConditions?: () => void;
+  onFocus: (event: FocusEvent<HTMLElement>) => void;
 }) {
   const colors = brand[service.color];
   const style = CARD_STYLE[format];
+  const hasDestinations = service.destinations.length > 0;
 
   return (
     <article
       id={service.slug}
+      onFocus={onFocus}
       className={`group flex h-full shrink-0 snap-start scroll-mt-28 flex-col rounded-panel border border-surface-container bg-white shadow-ambient transition-[translate,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:border-surface-container-high hover:shadow-lifted ${style.card}`}
     >
       <div className="flex items-center justify-between">
@@ -130,25 +140,41 @@ function ServiceCard({
         {service.description}
       </p>
 
-      {service.destinations.length > 0 && (
-        <ul
-          className="mt-auto flex flex-wrap items-center border-t border-surface-container pt-4"
-          aria-label={`Destinations : ${service.title}`}
-        >
-          {service.destinations.map((destination, position) => (
-            <li
-              key={destination}
-              className={`text-xs font-bold uppercase tracking-wider ${colors.text}`}
+      {(hasDestinations || onConditions) && (
+        <div className="mt-auto flex flex-col gap-4 border-t border-surface-container pt-4">
+          {hasDestinations && (
+            <ul className="flex flex-wrap items-center" aria-label={`Destinations : ${service.title}`}>
+              {service.destinations.map((destination, position) => (
+                <li
+                  key={destination}
+                  className={`text-xs font-bold uppercase tracking-wider ${colors.text}`}
+                >
+                  {position > 0 && (
+                    <span aria-hidden="true" className="px-2 text-on-surface-variant/40">
+                      ·
+                    </span>
+                  )}
+                  {destination}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {onConditions && (
+            <button
+              type="button"
+              onClick={onConditions}
+              aria-haspopup="dialog"
+              className="flex min-h-11 w-full items-center justify-between gap-3 rounded-xl bg-surface-container-low px-4 text-left text-sm font-semibold text-primary transition-colors hover:bg-surface-container"
             >
-              {position > 0 && (
-                <span aria-hidden="true" className="px-2 text-on-surface-variant/40">
-                  ·
-                </span>
-              )}
-              {destination}
-            </li>
-          ))}
-        </ul>
+              <span>
+                Conditions d'admissibilité
+                <span className="sr-only"> : {service.title}</span>
+              </span>
+              <Icon name="chevron_right" size={20} className="shrink-0 text-secondary" />
+            </button>
+          )}
+        </div>
       )}
     </article>
   );
@@ -201,6 +227,37 @@ export default function Services() {
     entered,
     scrollToCard,
   } = useHorizontalPin(services.length);
+
+  // Prestation dont la fenêtre des conditions est ouverte.
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+
+  /*
+    Le bouton d'une fiche épinglée hors de l'écran reçoit le focus au
+    clavier : on fait avancer la galerie jusqu'à elle. Le navigateur a pu
+    faire défiler la fenêtre de la galerie pour montrer le bouton, alors que
+    la piste ne se déplace que par transformation : on annule ce défilement.
+    Rien au clic (`:focus-visible`), ni pour une fiche déjà entière à
+    l'écran : le focus rendu au bouton à la fermeture ne déplace rien.
+
+    À l'image suivante seulement : le navigateur fait défiler vers l'élément
+    juste après l'événement `focus`, ce qui annulait le défilement doux de
+    scrollToCard.
+  */
+  const revealCard = (event: FocusEvent<HTMLElement>, slug: string) => {
+    const viewport = viewportRef.current;
+    const card = event.currentTarget;
+
+    if (!pinned || !viewport || !(event.target as HTMLElement).matches(':focus-visible')) return;
+
+    requestAnimationFrame(() => {
+      viewport.scrollLeft = 0;
+
+      const box = card.getBoundingClientRect();
+      const view = viewport.getBoundingClientRect();
+
+      if (box.left < view.left - 1 || box.right > view.right + 1) scrollToCard(slug);
+    });
+  };
 
   // Le pied de page pointe vers chaque prestation (#visa-etudiant…). Une fois
   // la galerie épinglée, l'ancre native ne suffit plus : on la rattrape.
@@ -294,6 +351,8 @@ export default function Services() {
         service={service}
         index={index}
         format={mode}
+        onConditions={hasConditions(service) ? () => setOpenSlug(service.slug) : undefined}
+        onFocus={(event) => revealCard(event, service.slug)}
       />
     </li>
   ));
@@ -444,8 +503,9 @@ export default function Services() {
         {mode === 'off' && (
           <div
             className="services-scroller overflow-x-auto overscroll-x-contain"
-            // Sans élément focalisable à l'intérieur, une zone défilante doit
-            // être atteignable au clavier pour rester utilisable aux flèches.
+            // Les fiches sans conditions n'ont rien de focalisable : la zone
+            // défilante doit être atteignable au clavier pour rester
+            // utilisable aux flèches.
             tabIndex={0}
             role="region"
             aria-label="Nos prestations visa"
@@ -473,6 +533,16 @@ export default function Services() {
 
       {/* Bas de section : en mode épinglé, l'écran entier fait déjà la marge. */}
       {mode === 'off' && <div className="h-6 sm:h-20" />}
+
+      {services.filter(hasConditions).map((service) => (
+        <ServiceConditions
+          key={service.slug}
+          service={service}
+          note={section.conditionsNote}
+          open={openSlug === service.slug}
+          onClose={() => setOpenSlug(null)}
+        />
+      ))}
     </section>
   );
 }

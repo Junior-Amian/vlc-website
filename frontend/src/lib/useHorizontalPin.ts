@@ -374,7 +374,12 @@ export function useHorizontalPin(count: number) {
       // La piste est décalée du même retrait que le conteneur du titre : une
       // carte est « en place » quand son bord gauche arrive à ce retrait.
       const inset = Number.parseFloat(getComputedStyle(track).paddingInlineStart) || 0;
-      const wanted = Math.min(distance.current, Math.max(0, card.offsetLeft - inset));
+      // Position mesurée à l'écran, pas `offsetLeft` : l'animation d'entrée
+      // laisse une transformation sur le <li> de chaque carte, qui devient
+      // alors son parent de référence (offsetLeft valait 0 pour toutes).
+      // Le décalage de la piste s'applique aux deux mesures et s'annule.
+      const left = card.getBoundingClientRect().left - track.getBoundingClientRect().left;
+      const wanted = Math.min(distance.current, Math.max(0, left - inset));
 
       window.scrollTo({ top: offsetTop.current + wanted, behavior: 'smooth' });
 

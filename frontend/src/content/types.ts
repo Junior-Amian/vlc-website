@@ -31,6 +31,21 @@ export type Service = {
   tagline: string;
   description: string;
   destinations: string[];
+  /** Conditions d'admissibilité (fenêtre ouverte depuis la fiche). */
+  conditionsIntro: string;
+  paths: ServicePath[];
+  /** Pièces demandées quelle que soit la voie. */
+  documents: string[];
+};
+
+/** Une voie d'accès (« Entrée Express ») ou un profil (« Salarié(e) »). */
+export type ServicePath = {
+  /** Facultatif quand la prestation n'a qu'une voie. */
+  title: string;
+  note: string;
+  /** « Âge : 18 à 45 ans » : le libellé avant les deux-points aligne les voies. */
+  criteria: string[];
+  documents: string[];
 };
 
 export type Testimonial = {
@@ -68,6 +83,8 @@ export type SiteContent = {
   services: {
     title: string;
     intro: string;
+    /** Mention en bas de la fenêtre des conditions. */
+    conditionsNote: string;
     items: Service[];
   };
   college: {

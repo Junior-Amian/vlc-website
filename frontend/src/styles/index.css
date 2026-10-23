@@ -176,6 +176,17 @@
     text-size-adjust: 100%;
   }
 
+  /*
+    Fenêtre <dialog> ouverte (conditions d'une prestation, médiathèque du
+    panel) : la page ne défile plus derrière. La place de la barre de
+    défilement reste réservée : sans elle, la page s'élargirait et la
+    galerie épinglée des prestations se recalculerait.
+  */
+  html:has(dialog[open]) {
+    overflow: hidden;
+    scrollbar-gutter: stable;
+  }
+
   body {
     font-family: var(--font-sans);
     background-color: var(--color-surface);
